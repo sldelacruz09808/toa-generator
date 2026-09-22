@@ -1,0 +1,1553 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0E5A6B">
+<meta name="description" content="Builds a Table of Authorities from a Hawai‘i or federal brief, entirely in your browser.">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<title>Dunn’s Table of Authorities Generator</title>
+<style>
+  #lockScreen{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;
+    background:#11161c;color:#EDF0F3;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;text-align:center;padding:24px}
+  #lockScreen .box{max-width:420px}
+  #lockScreen h2{font-size:20px;margin:0 0 10px}
+  #lockScreen p{color:#9BA8B8;line-height:1.5;margin:0 0 6px}
+</style>
+</head>
+<body>
+<div id="lockScreen"><div class="box">
+  <h2>Access unavailable</h2>
+  <p id="lockMessage">Access to Dunn’s Table of Authorities Generator has expired. Please contact the administrator.</p>
+</div></div>
+
+<title>Dunn’s Table of Authorities Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap">
+<style>
+:root{
+  --bg:#EDF0F3; --panel:#FFFFFF; --panel-2:#F5F7F9; --ink:#141C26; --muted:#566374; --line:#D3D9E1; --line-2:#E4E8ED;
+  --accent:#0E5A6B; --accent-ink:#FFFFFF; --accent-soft:#DDEEF2;
+  --warn:#8A5200; --warn-soft:#FBEED2; --ok:#1B6B44; --ok-soft:#DDF0E5;
+  --paper:#FFFFFF; --paper-ink:#111111; --shadow:0 1px 2px rgba(20,28,38,.06),0 8px 24px rgba(20,28,38,.08);
+  --display:"Newsreader",Georgia,"Times New Roman",serif; --ui:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0D1217; --panel:#151C24; --panel-2:#1B242E; --ink:#E6EBF1; --muted:#9BA8B8; --line:#2C3743; --line-2:#222C36;
+  --accent:#66C4D8; --accent-ink:#04202A; --accent-soft:#12303A; --warn:#F0B95C; --warn-soft:#3A2B10; --ok:#6FD3A0; --ok-soft:#123324;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);}}
+:root[data-theme="dark"]{
+  --bg:#0D1217; --panel:#151C24; --panel-2:#1B242E; --ink:#E6EBF1; --muted:#9BA8B8; --line:#2C3743; --line-2:#222C36;
+  --accent:#66C4D8; --accent-ink:#04202A; --accent-soft:#12303A; --warn:#F0B95C; --warn-soft:#3A2B10; --ok:#6FD3A0; --ok-soft:#123324;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:14px;line-height:1.5;padding-inline:16px}
+.wrap{max-width:1240px;margin-inline:auto;padding-block:28px 56px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px 32px;margin-bottom:22px}
+h1{font-family:var(--display);font-weight:600;font-size:clamp(26px,4vw,36px);line-height:1.1;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.sub{color:var(--muted);margin:6px 0 0;max-width:62ch}
+.privacy{display:inline-flex;gap:8px;align-items:center;font-size:12.5px;color:var(--ok);background:var(--ok-soft);padding:6px 11px;border-radius:999px;font-weight:500}
+.privacy svg{flex:none}
+.grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:20px;align-items:stretch}
+@media (max-width:980px){.grid{grid-template-columns:minmax(0,1fr)}.side{order:-1}.paper{max-height:420px!important}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.pad{padding:18px}
+.drop{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:center;justify-content:space-between;padding:18px;border:1.5px dashed var(--line);border-radius:10px;background:var(--panel);transition:border-color .15s,background .15s}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop b{font-weight:600}
+.drop p{margin:2px 0 0;color:var(--muted);font-size:13px;max-width:52ch}
+button,.btn{font:inherit;cursor:pointer}
+.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:8px 14px;border-radius:7px;font-weight:500;line-height:1.2}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn[disabled]{opacity:.5;cursor:not-allowed;filter:none}
+.btn.small{padding:5px 10px;font-size:12.5px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#status{min-height:20px;margin:10px 2px 0;font-size:13px;color:var(--muted)}
+#status.err{color:var(--warn);font-weight:500}
+.summary{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;justify-content:space-between;margin:18px 2px 10px}
+.summary .counts{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:500;background:var(--panel-2);border:1px solid var(--line-2);color:var(--muted);font-variant-numeric:tabular-nums}
+.chip.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.chip.ex{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+label.tog{display:inline-flex;gap:7px;align-items:center;font-size:13px;color:var(--muted);cursor:pointer}
+.cat{margin-top:18px}
+.cat>h2{font-family:var(--display);font-size:18px;font-weight:600;margin:0 2px 8px;display:flex;align-items:baseline;gap:8px}
+.cat>h2 small{font-family:var(--ui);font-size:12.5px;color:var(--muted);font-weight:400}
+.rows{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.row{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(96px,150px);gap:10px 14px;padding:12px 14px;border-top:1px solid var(--line-2);align-items:start}
+.row:first-child{border-top:0}
+.row.off{opacity:.45}
+.row.check{background:linear-gradient(90deg,var(--warn-soft),transparent 38%)}
+.row input[type=checkbox]{width:17px;height:17px;margin:3px 0 0;accent-color:var(--accent)}
+.field{width:100%;font:inherit;color:var(--ink);background:transparent;border:1px solid transparent;border-radius:5px;padding:3px 6px;margin-left:-6px}
+.field:hover{border-color:var(--line)}
+.field:focus{border-color:var(--accent);background:var(--panel);outline:none}
+.field.nm{font-weight:600}
+.field.ct{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+.field.pg{font-family:var(--mono);font-size:12.5px;border-color:var(--line);margin-left:0;background:var(--panel-2)}
+.pgbox label{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.flags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.flag{font-size:12px;color:var(--warn);background:var(--warn-soft);border-radius:5px;padding:2px 8px}
+details.more{grid-column:2 / -1;font-size:12.5px;color:var(--muted)}
+details.more summary{cursor:pointer;width:max-content;color:var(--accent);font-weight:500}
+.mlist{margin:8px 0 0;padding:0;list-style:none;display:grid;gap:5px;max-height:220px;overflow:auto}
+.mlist li{display:grid;grid-template-columns:44px minmax(0,1fr);gap:8px}
+.mlist b{font-family:var(--mono);font-weight:500;color:var(--ink)}
+.mlist span{overflow-wrap:anywhere}
+.tools{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:10px;align-items:center}
+.tools input[type=text],.tools select,.set select,.set input[type=number],.add input,.add select{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:5px 8px}
+.tools input[type=text]{min-width:0;flex:1 1 200px}
+.side{display:grid;gap:14px;align-content:start}
+.stick{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px)}
+@media (max-width:980px){.stick{position:static}}
+.ribbon[hidden]{display:none}
+.set{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 14px}
+.set label{display:grid;gap:4px;font-size:12px;color:var(--muted)}
+.set label.wide{grid-column:1/-1}
+.set label.inl{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--ink)}
+.set h3,.side h3{margin:0 0 10px;font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.paperwrap{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:14px;position:relative;overflow:hidden}
+.ribbon{position:absolute;top:12px;right:12px;z-index:1}
+.paper{background:var(--paper);color:var(--paper-ink);font-family:Tinos,"Times New Roman",Times,serif;font-size:12.5px;line-height:1.25;padding:36px 34px 30px;max-height:calc(100vh - 150px);overflow:auto;box-shadow:var(--shadow);border-radius:2px}
+.p-title{text-align:center;font-weight:700;text-decoration:underline}
+.p-pg{text-align:right;font-weight:700;margin:2px 0 8px}
+.p-head{font-weight:700;text-decoration:underline;margin:16px 0 10px}
+.p-ent{margin-bottom:10px;break-inside:avoid}
+.p-name{padding-left:0}
+.p-name.underline{text-decoration:underline}.p-name.italic{font-style:italic}
+.p-line{display:flex;align-items:flex-end;gap:3px;padding-left:18px}
+.p-ent.one .p-line{padding-left:0}
+.p-line .lead{flex:1;min-width:14px;border-bottom:2px dotted currentColor;margin-bottom:4px}
+.p-line .pgs{white-space:nowrap;max-width:45%;text-align:right;white-space:normal}
+.add{margin-top:22px;padding:16px}
+.add h2{font-family:var(--display);font-size:17px;margin:0 0 4px}
+.add p{margin:0 0 12px;color:var(--muted);font-size:13px}
+.add .frm{display:grid;grid-template-columns:150px minmax(0,1fr);gap:10px}
+.add .frm .full{grid-column:1/-1}
+@media (max-width:560px){.add .frm{grid-template-columns:minmax(0,1fr)}.row{grid-template-columns:auto minmax(0,1fr)}.row .pgbox{grid-column:2}}
+.add input,.add select{width:100%}
+.linkbox{margin-top:16px}
+.linkbox p{margin:0 0 10px;color:var(--muted);font-size:13px}
+.linkbox p b{color:var(--ink)}
+.linkbox code{font-family:var(--mono);font-size:12px;background:var(--panel-2);border:1px solid var(--line-2);border-radius:4px;padding:0 5px}
+.linkbox .row2{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.linkbox .fname{font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+#linkMsg{margin-top:10px;font-size:13px;color:var(--muted)}
+#linkMsg.ok{color:var(--ok)}
+#linkMsg.err{color:var(--warn);font-weight:500}
+#linkMsg ul{margin:6px 0 0;padding-left:18px}
+.how{margin:22px 2px 0;color:var(--muted);font-size:13px;max-width:78ch}
+.how b{color:var(--ink)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Dunn’s Table of Authorities Generator</h1>
+      <p class="sub">Upload a brief as a PDF. It finds the Hawaiʻi and federal cases, statutes, rules and constitutional provisions, counts the pages, and gives you a Table of Authorities with dot leaders.</p>
+    </div>
+    <span class="privacy"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Your brief is read in this browser and never uploaded</span>
+  </header>
+
+  <div class="drop" id="drop">
+    <div>
+      <b>Choose your brief (PDF)</b>
+      <p>Body of the brief only. In Word: File &gt; Save As &gt; PDF. Page 1 of the PDF counts as page 1 unless you change the starting page.</p>
+    </div>
+    <div class="actions">
+      <input type="file" id="file" accept="application/pdf,.pdf" hidden>
+      <button class="btn primary" id="pick" type="button">Choose PDF</button>
+    </div>
+  </div>
+  <div id="status" role="status" aria-live="polite"></div>
+
+  <div class="grid">
+    <main>
+      <div class="summary">
+        <div class="counts" id="counts"></div>
+        <label class="tog"><input type="checkbox" id="onlyCheck"> Show only items to check</label>
+      </div>
+      <div id="review"></div>
+
+      <section class="panel add" id="addbox" aria-labelledby="addh">
+        <h2 id="addh">Add an authority it missed</h2>
+        <p>Type how it should read. Put a phrase from the brief in “find pages with” and it counts every page where that phrase appears.</p>
+        <div class="frm">
+          <select id="addCat" aria-label="Category"><option value="case">Case</option><option value="statute">Statute</option><option value="const">Constitutional provision</option><option value="rule">Rule</option><option value="other">Other authority</option></select>
+          <input id="addName" type="text" placeholder="Name, e.g. Nelson v. Hawaiian Homes Comm’n" aria-label="Name">
+          <input id="addCite" class="full" type="text" placeholder="Citation (cases only), e.g. 141 Hawaiʻi 411, 412 P.3d 917 (2018)" aria-label="Citation">
+          <input id="addFind" class="full" type="text" placeholder="Find pages with this text, e.g. Nelson II" aria-label="Find pages with">
+        </div>
+        <div class="actions" style="margin-top:12px"><button class="btn" id="addBtn" type="button">Add to the table</button><span id="addMsg" style="color:var(--muted);font-size:13px"></span></div>
+      </section>
+
+      <p class="how"><b>What gets counted.</b> Every page where a case, statute, rule or provision is cited, including footnotes, short forms (<i>Kaleikini</i>, 129 Hawaiʻi at 467) and <i>Id.</i> after a case. <i>Id.</i> after a statute is not counted; the statute is normally named on the same page. Names used without a citation are counted only when the brief defines them, like “Nelson I”. Open “Where found” on any row to check the exact spots.</p>
+    </main>
+
+    <aside class="side">
+      <section class="panel pad">
+        <h3>Table settings</h3>
+        <div class="set">
+          <label>First page number<input type="number" id="startPage" min="1" max="999" value="1"></label>
+          <label>Case names<select id="nameStyle"><option value="underline">Underlined</option><option value="italic">Italic</option><option value="plain">Plain</option></select></label>
+          <label class="wide">Statutes read as<select id="hrsStyle"><option value="auto">Same as in my brief</option><option value="HRS">HRS § 632-1</option><option value="H.R.S.">H.R.S. § 632-1</option><option value="Haw. Rev. Stat.">Haw. Rev. Stat. § 632-1</option></select></label>
+          <label class="inl"><input type="checkbox" id="passim"> Use “passim” at</label>
+          <label><select id="passimMin" aria-label="Passim threshold"><option value="5" selected>5 or more pages</option><option value="6">6 or more pages</option><option value="8">8 or more pages</option><option value="10">10 or more pages</option></select></label>
+          <label class="inl wide"><input type="checkbox" id="ranges"> Combine runs of 3+ consecutive pages (12–14)</label>
+        </div>
+      </section>
+
+      <section class="panel pad linkbox" id="linkbox" aria-labelledby="linkh">
+        <h3 id="linkh">Clickable page numbers (optional)</h3>
+        <p><b>Do this last.</b> Choose the Word file your PDF was saved from. The builder adds the table to a <b>copy</b> of it, and every page number becomes a link that jumps to that page in the PDF. Your original file is not changed.</p>
+        <p>Where should the table go? Type <code>[[TOA]]</code> on its own line in your Word file. If there is none, the table goes at the very top.</p>
+        <input type="file" id="docxFile" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
+        <div class="row2">
+          <button class="btn" id="pickDocx" type="button">Choose Word file (.docx)</button>
+          <span class="fname" id="docxName">No Word file chosen</span>
+        </div>
+        <div class="actions" style="margin-top:12px"><button class="btn primary" id="dlLinked" type="button" disabled>Download brief with clickable table</button></div>
+        <div id="linkMsg" role="status" aria-live="polite"></div>
+      </section>
+
+      <section class="stick">
+        <div class="paperwrap">
+          <span class="chip ex ribbon" id="ribbon" hidden>Example layout</span>
+          <div class="paper" id="paper" aria-label="Table of Authorities preview"></div>
+        </div>
+        <div class="actions" style="margin-top:12px">
+          <button class="btn primary" id="dl" type="button">Download table only (.docx)</button>
+          <span id="dlMsg" style="color:var(--muted);font-size:13px"></span>
+        </div>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<script>
+  /* Plain-browser file download (replaces the old Claude-artifact downloads capability) */
+  function saveBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+  }
+</script>
+<script src="./vendor/pdf.min.js"></script>
+<script src="./vendor/jszip.min.js"></script>
+<script>
+/* Table of Authorities engine: Hawaii state + federal (D. Haw. / 9th Cir.) citations.
+   Pure JS, no dependencies. Works in the browser (global TOA) and in Node (module.exports). */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.TOA = factory();
+}(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+
+  /* ------------------------------------------------------------------ */
+  /* 1. Turning PDF text items into searchable text                      */
+  /* ------------------------------------------------------------------ */
+
+  // pages: [{h: pageHeight, items: [{s, h, x, y, eol}]}]
+  function prepareChannels(pages) {
+    const hc = {};
+    for (const p of pages) for (const it of p.items) {
+      if (it.h > 0 && /[A-Za-z]{3}/.test(it.s)) {
+        const k = Math.round(it.h * 2) / 2;
+        hc[k] = (hc[k] || 0) + it.s.length;
+      }
+    }
+    let dom = 12, best = 0;
+    for (const k in hc) if (hc[k] > best) { best = hc[k]; dom = +k; }
+
+    const isSuper = (it) => it.h > 0 && it.h <= 0.65 * dom && /^\s*\d{1,3}\s*$/.test(it.s);
+    const isPageNo = (it, H) => /^\s*(\d{1,3}|[ivxlc]{1,6})\s*$/i.test(it.s) && (it.y < 0.07 * H || it.y > 0.93 * H);
+
+    const body = [], notes = [];
+    let noteChars = 0, bodyChars = 0;
+    for (const p of pages) {
+      const its = p.items.filter((it) => !isSuper(it) && !isPageNo(it, p.h || 792));
+      // trailing run of clearly-smaller text after the last body-size item = footnotes
+      let lastBody = -1;
+      for (let i = 0; i < its.length; i++) if (its[i].h >= 0.93 * dom && /[A-Za-z]/.test(its[i].s)) lastBody = i;
+      let cut = its.length;
+      if (lastBody >= 0) {
+        let j = lastBody + 1;
+        let small = 0, tot = 0;
+        for (let i = j; i < its.length; i++) if (/[A-Za-z]/.test(its[i].s)) { tot++; if (its[i].h < 0.93 * dom) small++; }
+        if (tot > 0 && small / tot > 0.8) cut = j;
+      }
+      const b = its.slice(0, cut), n = its.slice(cut);
+      body.push(b); notes.push(n);
+      for (const it of n) noteChars += it.s.length;
+      for (const it of b) bodyChars += it.s.length;
+    }
+    const useNotes = noteChars > 0.01 * bodyChars;
+    const build = (pageItems, name) => {
+      let text = ''; const starts = [];
+      for (const its of pageItems) {
+        starts.push(text.length);
+        let t = '';
+        for (const it of its) { t += it.s; if (it.eol) t += ' '; }
+        t = t.replace(/[   ]/g, ' ').replace(/\s+/g, ' ').replace(/(\w)- (?=\w)/g, '$1-').trim();
+        text += t + ' ';
+      }
+      return { name, text, starts, norm: normalize(text) };
+    };
+    if (useNotes) return [build(body, 'body'), build(notes, 'notes')];
+    return [build(pages.map((p, i) => body[i].concat(notes[i])), 'body')];
+  }
+
+  function normalize(s) {
+    return s
+      .replace(/[ʻ‘’ʼ`´]/g, "'")
+      .replace(/[“”]/g, '"')
+      .replace(/[–—‑−]/g, '-');
+  }
+
+  function pageAt(ch, pos) {
+    let lo = 0, hi = ch.starts.length - 1;
+    while (lo < hi) {
+      const mid = (lo + hi + 1) >> 1;
+      if (ch.starts[mid] <= pos) lo = mid; else hi = mid - 1;
+    }
+    return lo + 1;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* 2. Citation patterns                                                */
+  /* ------------------------------------------------------------------ */
+
+  const REPS = String.raw`Hawai'i|Hawaii|Haw\.\s*App\.|Haw\.?|P\.\s?[23]d|P\.|U\.\s?S\.|S\.\s?Ct\.|F\.\s?Supp\.\s?(?:2d|3d)|F\.\s?Supp\.|F\.\s?(?:2d|3d|4th)|F\.\s?App'x|B\.R\.|Fed\.\s?Cl\.`;
+  const PIN = String.raw`\d{1,5}(?:\s*-\s*\d{1,5})?(?!\d)(?!\s+(?:${REPS})(?![A-Za-z]))`;
+  const CITE1 = String.raw`(\d{1,4})\s+(${REPS})(?![A-Za-z])\s+(\d{1,5})(?!\d)(?:\s*,\s*(?:\d{1,2}\s+)?(${PIN}))?`;
+  const FULL_RE = () => new RegExp(
+    CITE1 + String.raw`(?:\s*,\s*(\d{1,4})\s+(${REPS})(?![A-Za-z])\s+(\d{1,5})(?!\d)(?:\s*,\s*(?:\d{1,2}\s+)?(${PIN}))?)?(?:\s*\(([^()]{0,40}?)(\d{4})\))?`, 'g');
+  const SHORT_RE = () => new RegExp(String.raw`(\d{1,4})\s+(${REPS})(?![A-Za-z])\s+at\s+(\d{1,5})(?!\d)`, 'g');
+
+  function canonRep(s) {
+    const t = s.replace(/\s+/g, '');
+    if (/^Hawai'?i$/i.test(t) || /^Hawaii$/i.test(t)) return 'HI';
+    const map = { 'Haw.App.': 'Haw. App.', 'Haw.': 'Haw.', 'Haw': 'Haw.', 'P.2d': 'P.2d', 'P.3d': 'P.3d', 'P.': 'P.', 'U.S.': 'U.S.',
+      'S.Ct.': 'S. Ct.', 'F.2d': 'F.2d', 'F.3d': 'F.3d', 'F.4th': 'F.4th', 'F.Supp.': 'F. Supp.', 'F.Supp.2d': 'F. Supp. 2d',
+      'F.Supp.3d': 'F. Supp. 3d', "F.App'x": "F. App'x", 'B.R.': 'B.R.', 'Fed.Cl.': 'Fed. Cl.' };
+    return map[t] || s;
+  }
+
+  const ABBR = new Set(('Inc Co Corp Ltd LLC LLP LP Cnty Cty Cmty Bd Trs Emps Ret Sys Dep Dept Comm Am Nat Mgmt Grp Hosp Univ Ctr Pub ' +
+    'Inv Ins Sav Servs Serv Rd Prot Assocs Assoc Dev Const Constr Prods Indus Lab Mkt Mfg Ry Hous Auth Educ Emp Fin Int Ind Mut Prop Reg ' +
+    'Res Cir Dist Div Off Op Rep Sec Soc Tech Tel Transp Util Mun Ed Envtl Fed Ave St Blvd Bldg Bros Ent Enters Cal Haw Ariz Wash Pac ' +
+    'Atl Mid Miss Ala Nev Ore Tex Corr Contractors Gen Govt Cons Eng Elec Found Fund Lib Mach Med Pharm Ref Sch Sci Stat Tr Wkrs Jr Sr ' +
+    'Ltd Rec Mem Mtg Mtge Sur Elem Sec Admin Agric Agr Ass Auto Bankr Br Chem Ch Ctys Def Dir Educ Exch Exam Ex Hldgs Info Inst Lit ' +
+    'Liab Nw Ne Sw Se Pres Pol Prop Pship Rest Rts Sols Sys Univ Vill Wks Bos Balt Phila Chi Pitt Cin Cleve Det Mil Minn Indep Fla Ga Ky La Md Mass Mich Neb Okla Pa Tenn Va Vt Wis Wyo Kan Colo Conn Del Ill Me Mo Mont Or Sav Sch Cnty Mkts Reprod Sec Wash').split(/\s+/));
+  const CORP = new Set(['Inc', 'Inc.', 'Ltd', 'Ltd.', 'Co', 'Co.', 'Corp', 'Corp.', 'LLC', 'LLP', 'LP', 'L.L.C.', 'N.A.', 'Jr.', 'Sr.', 'P.C.', 'PC']);
+  const LOWER_OK = new Set(['of', 'the', 'and', 'for', 'ex', 'rel.', 'v.', 'vs.', 're', 're.', 'on', 'de', 'del', 'la', 'du', 'parte', 'a']);
+  const STARTERS = new Set(('See Cf Compare But Accord Also Under In Thus Here However Further Additionally Moreover Indeed Because Where When While ' +
+    'Although Since As If The And Or Of For On At By With Without Like Unlike Per From To Following After Before Citing Quoting Contra Rather ' +
+    'Instead Similarly Likewise Accordingly Therefore Hence Yet So Then Now This That These Those').split(/\s+/));
+
+  function abbrLike(core) {
+    if (!/\.$/.test(core)) return /^(LLC|LLP|LP|PC|II|III|IV)$/.test(core);
+    const w = core.slice(0, -1);
+    if (ABBR.has(w)) return true;
+    if (/^([A-Za-z]\.)+[A-Za-z]$/.test(w) || /^[A-Z]$/.test(w)) return true;       // initials, N.A.
+    if (/^([A-Za-z]\.)+$/.test(core)) return true;
+    if (/^[A-Z][bcdfghjklmnpqrstvwxz]{1,5}$/.test(w)) return true;                // Bd, Ctr, Mgmt, Sys ...
+    return false;
+  }
+
+  // Walk backwards from idx to find a case name. Returns {name, start} or null.
+  function scanName(norm, orig, idx, full) {
+    const from = Math.max(0, idx - 320);
+    const seg = norm.slice(from, idx);
+    const toks = []; const re = /\S+/g; let m;
+    while ((m = re.exec(seg))) toks.push({ t: m[0], i: from + m.index });
+    const out = []; let seenV = false;
+    for (let k = toks.length - 1; k >= 0 && out.length < 26; k--) {
+      const t = toks[k].t; const isLast = k === toks.length - 1;
+      if (/[()\[\];:"]/.test(t)) break;
+      const next = out.length ? out[0].t.replace(/,$/, '') : '';
+      if (/,$/.test(t)) {
+        const core = t.slice(0, -1);
+        if (!(isLast || CORP.has(next) || abbrLike(core) || (full && !seenV && /^[A-Z]/.test(core)))) break;
+        if (/^[a-z]/.test(core) && !LOWER_OK.has(core)) break;
+      } else if (/\.$/.test(t)) {
+        if (!(LOWER_OK.has(t.toLowerCase()) || abbrLike(t))) break;
+      } else {
+        if (/^[a-z]/.test(t) && !LOWER_OK.has(t)) break;
+        if (!/^[A-Za-z0-9&'\-\/]/.test(t)) break;
+      }
+      if (t === 'v.' || t === 'vs.') seenV = true;
+      out.unshift(toks[k]);
+    }
+    while (out.length > 1) {
+      const f = out[0].t;
+      const isIn = f === 'In' && /^re\.?$/.test(out[1].t);
+      if (!isIn && (STARTERS.has(f) || LOWER_OK.has(f))) out.shift(); else break;
+    }
+    if (!out.length) return null;
+    const start = out[0].i;
+    let name = orig.slice(start, idx).trim().replace(/,\s*$/, '');
+    name = name.replace(/^In re\.? /, 'In re ').replace(/([A-Za-z.\u2019']) and (?=[A-Z])/g, '$1 & ');
+    const words = name.split(/\s+/);
+    const hasV = words.some((w, i) => i > 0 && i < words.length - 1 && /^(v\.|vs\.)$/.test(w));
+    const special = /^(In re|Ex parte|Matter of|State ex rel\.|Estate of) /.test(name);
+    return { name, start, isCase: hasV || special, tokens: words.length };
+  }
+
+  /* ---------- statutes, constitution, rules, other ---------- */
+
+  const SEC = String.raw`\d{1,3}[A-Z]?-\d{1,4}(?:\.\d{1,3})?`;
+  const SUB = String.raw`(?:\([A-Za-z0-9]{1,4}\))*`;
+  const HRS_LEAD = String.raw`(?:HRS|H\.R\.S\.|Haw\.\s*Rev\.\s*Stat\.|Hawai'i Revised Statutes|Hawaii Revised Statutes)`;
+  const STAT_A = () => new RegExp(String.raw`\b${HRS_LEAD}(?:\s*\(\s*"?HRS"?\s*\))?\s*(?:§§?|[Ss]ections?|[Ss]ecs?\.)?\s*(${SEC})${SUB}((?:\s*(?:,\s*(?:and\s+)?|\s+and\s+|\s*&\s*|,?\s+or\s+)(?:§\s*)?${SEC}${SUB})*)`, 'g');
+  const STAT_B = () => new RegExp(String.raw`(?:§§?|[Ss]ections?)\s*(${SEC})${SUB}(?:,\s*|\s+of\s+the\s+|\s+)(?:HRS|Hawai'i Revised Statutes)\b`, 'g');
+  const CHAP_A = () => new RegExp(String.raw`\bHRS\s+[Cc]hapters?\s+(\d{1,3}[A-Z]?)\b`, 'g');
+  const CHAP_B = () => new RegExp(String.raw`\b[Cc]hapters?\s+(\d{1,3}[A-Z]?)\s+of\s+the\s+(?:HRS|Hawai'i Revised Statutes)`, 'g');
+  const ACT_RE = () => new RegExp(String.raw`\bAct\s+(\d{1,3}),\s+(?:Session Laws of Hawai'i|SLH|S\.L\.H\.|Haw\.\s*Sess\.\s*Laws)\s+(\d{4})`, 'g');
+
+  const ROMAN = { first: 'I', second: 'II', third: 'III', fourth: 'IV', fifth: 'V', sixth: 'VI', seventh: 'VII', eighth: 'VIII', ninth: 'IX', tenth: 'X', eleventh: 'XI', twelfth: 'XII', thirteenth: 'XIII', fourteenth: 'XIV', fifteenth: 'XV', sixteenth: 'XVI', seventeenth: 'XVII', eighteenth: 'XVIII', nineteenth: 'XIX', twentieth: 'XX', 'twenty-first': 'XXI', 'twenty-second': 'XXII', 'twenty-sixth': 'XXVI', 'twenty-seventh': 'XXVII' };
+  const romanVal = (r) => { const v = { I: 1, V: 5, X: 10, L: 50, C: 100 }; let n = 0, prev = 0; for (const ch of r.split('').reverse()) { const x = v[ch] || 0; n += x < prev ? -x : x; prev = Math.max(prev, x); } return n; };
+
+  const CONST_HI_A = () => new RegExp(String.raw`(?:Haw\.|Hawai'i|Hawaii)\s+Const(?:itution)?\.?,?\s+(?:Art\.?|Article)\s+([IVXLC]+),?\s+(?:§|[Ss]ec(?:tion|\.)?)\s*(\d{1,2})`, 'g');
+  const CONST_OF = () => new RegExp(String.raw`(?:Art\.?|Article)\s+([IVXLC]+),?\s+(?:§|[Ss]ection|[Ss]ec\.)\s*(\d{1,2})${SUB}\s+of\s+the\s+(Hawai'i|Hawaii|United States|U\.S\.)\s+Constitution`, 'g');
+  const CONST_AMEND = () => new RegExp(String.raw`\b([A-Za-z]+(?:-[a-z]+)?)\s+Amendment\s+to\s+the\s+(?:United States|U\.S\.)\s+Constitution`, 'g');
+  const CONST_US = () => new RegExp(String.raw`U\.\s?S\.\s+Const\.?,?\s+amend\.\s+([IVXL]+)`, 'g');
+
+  const RULE_ABBR = String.raw`HRCP|HRAP|HRPP|DCRCP|HRE|FRCP|FRAP|FRE|FRCrP`;
+  const RULE_A = () => new RegExp(String.raw`\b(${RULE_ABBR})\s+(?:Rules?\s+)?(\d{1,3}(?:\.\d{1,2})?)(?!\d)${SUB}((?:\s*(?:,|and|&)\s*(?:Rule\s+)?\d{1,3}(?:\.\d{1,2})?(?!\d)${SUB})*)`, 'g');
+  const RULE_OF = () => new RegExp(String.raw`\bRules?\s+(\d{1,3}(?:\.\d{1,2})?)(?!\d)${SUB}\s+of\s+the\s+(Hawai'i Rules of (?:Appellate|Civil|Penal|Evidence)(?: Procedure)?|Federal Rules of (?:Civil|Appellate|Criminal) Procedure|Federal Rules of Evidence|District Court Rules of Civil Procedure)`, 'g');
+  const RULE_FED = () => new RegExp(String.raw`\bFed\.\s*R\.\s*(Civ\.\s*P\.|App\.\s*P\.|Crim\.\s*P\.|Evid\.)\s*(\d{1,3})(?!\d)${SUB}`, 'g');
+  const RULE_HAW = () => new RegExp(String.raw`\bHaw\.\s*R\.\s*(Civ\.\s*P\.|App\.\s*P\.|Penal\s*P\.|Evid\.)\s*(\d{1,3})(?!\d)${SUB}`, 'g');
+  const RULE_CIR = () => new RegExp(String.raw`\b(?:Ninth Circuit Rule|9th Cir\.\s*R\.|Cir\.\s*R\.)\s*(\d{1,2}-\d{1,2})`, 'g');
+  const RULE_LR = () => new RegExp(String.raw`\b(?:D\.\s*Haw\.\s*)?L\.?R\.?\s?(\d{1,2}\.\d{1,2})`, 'g');
+
+  const RULE_LABEL = { HRCP: 'HRCP Rule', HRAP: 'HRAP Rule', HRE: 'HRE Rule', HRPP: 'HRPP Rule', DCRCP: 'DCRCP Rule', FRCP: 'Fed. R. Civ. P.', FRAP: 'Fed. R. App. P.', FRE: 'Fed. R. Evid.', FRCRP: 'Fed. R. Crim. P.' };
+  const RULE_ORDER = ['HRAP', 'HRCP', 'HRE', 'HRPP', 'DCRCP', 'FRAP', 'FRCP', 'FRE', 'FRCRP', 'CIR', 'LR'];
+  const RULE_LONG = (s) => {
+    if (/Hawai'i Rules of Appellate/.test(s)) return 'HRAP';
+    if (/Hawai'i Rules of Civil/.test(s)) return 'HRCP';
+    if (/Hawai'i Rules of Evidence/.test(s)) return 'HRE';
+    if (/Hawai'i Rules of Penal/.test(s)) return 'HRPP';
+    if (/Federal Rules of Civil/.test(s)) return 'FRCP';
+    if (/Federal Rules of Appellate/.test(s)) return 'FRAP';
+    if (/Federal Rules of Evidence/.test(s)) return 'FRE';
+    if (/Federal Rules of Criminal/.test(s)) return 'FRCRP';
+    if (/District Court Rules of Civil/.test(s)) return 'DCRCP';
+    return null;
+  };
+  const shortRuleType = (s, fed) => {
+    const t = s.replace(/\s+/g, '');
+    if (/^Civ/.test(t)) return fed ? 'FRCP' : 'HRCP';
+    if (/^App/.test(t)) return fed ? 'FRAP' : 'HRAP';
+    if (/^Crim/.test(t)) return 'FRCRP';
+    if (/^Penal/.test(t)) return 'HRPP';
+    return fed ? 'FRE' : 'HRE';
+  };
+
+  const OTHER_PATTERNS = [
+    { re: () => /\b(Conf\.|Stand\.|Sen\. Stand\.|H\. Stand\.|House Stand\.|Senate Stand\.)\s*Comm\.\s*Rep\.\s*No\.\s*(\d{1,5})/g, name: (m) => `${m[1].replace(/^(Sen\.|H\.|House|Senate) /, '$1 ')} Comm. Rep. No. ${m[2]}`, key: (m) => `cr|${m[1]}|${m[2]}` },
+    { re: () => /\b(H|S)\.?B\.?\s+No\.\s*(\d{1,5})/g, name: (m) => `${m[1]}.B. No. ${m[2]}`, key: (m) => `bill|${m[1]}|${m[2]}` },
+    { re: () => /\b(House|Senate) Bill No\.\s*(\d{1,5})/g, name: (m) => `${m[1][0]}.B. No. ${m[2]}`, key: (m) => `bill|${m[1][0]}|${m[2]}` },
+    { re: () => /\bGAO-\d{2}-\d{1,4}[A-Z]?/g, name: (m) => m[0], key: (m) => `gao|${m[0]}` },
+  ];
+
+  const RECORD_RE = /\bROA\b|\bFC\s+Dkt|\bDkt\.|\bTR\s*\[|\bTr\.\s|\bTR\b|\bExhibit\b|\bEx\.\s/g;
+  const ID_RE = /(?:\bId\.|\b[Ss]ee,? id\.|\bid\.)(?![A-Za-z])/g;
+
+  /* ------------------------------------------------------------------ */
+  /* 3. Analysis                                                         */
+  /* ------------------------------------------------------------------ */
+
+  const CATS = ['case', 'statute', 'const', 'rule', 'other'];
+  const CAT_HEAD = { case: 'CASES', statute: 'STATUTES', const: 'CONSTITUTIONAL PROVISIONS', rule: 'RULES', other: 'OTHER AUTHORITIES' };
+
+  function analyze(pages, opts) {
+    opts = Object.assign({ hrsStyle: 'auto' }, opts || {});
+    const channels = opts.channels || prepareChannels(pages);
+    const auths = []; const byKey = new Map(); const lookup = new Map();
+    const warnings = [];
+    const okinaVotes = {};
+
+    function getAuth(cat, key, init) {
+      const k = cat + '|' + key;
+      let a = byKey.get(k);
+      if (!a) {
+        a = Object.assign({ id: auths.length, cat, key, pages: new Set(), aliases: new Set(), mentions: [], flags: [], include: true }, init);
+        byKey.set(k, a); auths.push(a);
+      }
+      return a;
+    }
+    function mention(a, ch, pos, len, kind) {
+      const pg = pageAt(ch, pos);
+      a.pages.add(pg);
+      const s = Math.max(0, pos - 40);
+      a.mentions.push({ page: pg, kind, snippet: ch.text.slice(s, Math.min(ch.text.length, pos + len + 40)).trim(), pos, len, ci: channels.indexOf(ch), match: ch.norm.slice(pos, pos + len) });
+    }
+
+    /* ---- pass A: full case citations ---- */
+    const events = channels.map(() => []);
+    channels.forEach((ch, ci) => {
+      const re = FULL_RE(); let m;
+      while ((m = re.exec(ch.norm))) {
+        let rep1 = canonRep(m[2]);
+        const vol1 = m[1], pg1 = m[3];
+        if (rep1 === 'Haw.' && +vol1 >= 88) rep1 = 'HI';
+        let rep2 = m[6] ? canonRep(m[6]) : null;
+        if (rep2 === 'Haw.' && +m[5] >= 88) rep2 = 'HI';
+        if (rep1 === 'HI') { const mm = /Hawai(.)i/.exec(ch.text.slice(m.index, m.index + 40)); if (mm) okinaVotes[mm[1]] = (okinaVotes[mm[1]] || 0) + 1; }
+        // both must be reasonable reporters; skip obvious junk like "P." as primary with tiny volume
+        const nm = scanName(ch.norm, ch.text, m.index, true);
+        const parallel = m[5] ? `${m[5]}|${rep2}|${m[7]}` : null;
+        const primary = `${vol1}|${rep1}|${pg1}`;
+        let auth = lookupKey(primary) || (parallel && lookupKey(parallel)) || null;
+        const yr = m[10] ? ((m[9] || '').trim() + (m[9] && m[9].trim() ? ' ' : '') + m[10]) : '';
+        const cite = { vol1, rep1, pg1, vol2: m[5] || '', rep2: rep2 || '', pg2: m[7] || '', paren: yr };
+        const score = (m[5] ? 2 : 0) + (yr ? 1 : 0) + (nm && nm.isCase ? 1 : 0);
+        if (!auth) {
+          if (!(nm && nm.isCase)) {
+            // nameless: could be "Id. at 144 Hawai'i 466" -- handled in pass B via lookup; remember it
+            events[ci].push({ pos: m.index, len: m[0].length, type: 'nameless', primary, parallel, cite });
+            continue;
+          }
+          auth = getAuth('case', primary, { name: nm.name, cite, score, aliasesSeen: new Set() });
+          register(auth, primary, parallel, cite);
+        } else if (nm && nm.isCase && score > (auth.score || 0)) {
+          auth.name = nm.name; auth.cite = cite; auth.score = score;
+        } else if (nm && nm.isCase && !auth.name) { auth.name = nm.name; }
+        register(auth, primary, parallel, cite);
+        const pos = nm && nm.isCase ? nm.start : m.index;
+        mention(auth, ch, pos, m.index + m[0].length - pos, 'full');
+        events[ci].push({ pos, auth, type: 'cite' });
+        // parenthetical alias: ("Nelson II")
+        const after = ch.norm.slice(m.index + m[0].length, m.index + m[0].length + 60);
+        const am = /^\s*\(\s*"([^"]{2,40})"\s*\)/.exec(after) || /^\s*\(\s*([A-Z][A-Za-z.' ]{1,25} (?:I|II|III|IV|V|VI))\s*\)/.exec(after);
+        if (am && /^[A-Z]/.test(am[1]) && !/^(the|see)/i.test(am[1])) auth.aliases.add(am[1]);
+        if (nm && nm.isCase) {
+          const first = nm.name.split(/\s+v\.\s+/)[0];
+          if (/^[A-Z][a-z'\-]{4,}$/.test(first) && !GENERIC.has(first)) auth.aliases.add(first);
+        }
+        re.lastIndex = m.index + m[0].length;
+      }
+    });
+
+    function register(auth, primary, parallel, cite) {
+      const keys = [primary]; if (parallel) keys.push(parallel);
+      for (const k of keys) {
+        const parts = k.split('|');
+        const lk = parts[0] + '|' + parts[1];
+        const arr = lookup.get(lk) || [];
+        if (!arr.some((e) => e.page === +parts[2])) { arr.push({ page: +parts[2], auth }); lookup.set(lk, arr); }
+        byKey.set('case|' + k, auth);
+        (auth.pageKeys = auth.pageKeys || []).push(+parts[2]);
+      }
+    }
+    function lookupKey(k) { return byKey.get('case|' + k) || null; }
+    function lookupShort(vol, rep, pin) {
+      const arr = lookup.get(vol + '|' + rep);
+      if (!arr) return null;
+      let best = null;
+      for (const e of arr) if (e.page <= pin && pin - e.page < 600 && (!best || e.page > best.page)) best = e;
+      return best ? best.auth : null;
+    }
+
+    /* ---- pass B: everything else, in text order per channel ---- */
+    channels.forEach((ch, ci) => {
+      const ev = events[ci];
+      const N = ch.norm, T = ch.text;
+
+      // nameless full cites (e.g. "Id. at 144 Hawai'i 466")
+      for (const e of ev.slice()) {
+        if (e.type !== 'nameless') continue;
+        const a = byKey.get('case|' + e.primary) || (e.parallel && byKey.get('case|' + e.parallel));
+        if (a) { mention(a, ch, e.pos, e.len, 'nameless'); ev.push({ pos: e.pos, auth: a, type: 'cite' }); }
+        else {
+          const a2 = getAuth('case', e.primary, { name: '', cite: e.cite, score: 0, flags: ['No case name found'] });
+          register(a2, e.primary, e.parallel, e.cite);
+          mention(a2, ch, e.pos, e.len, 'nameless'); ev.push({ pos: e.pos, auth: a2, type: 'cite' });
+        }
+      }
+
+      // short-form case cites
+      { const re = SHORT_RE(); let m;
+        while ((m = re.exec(N))) {
+          let rep = canonRep(m[2]); if (rep === 'Haw.' && +m[1] >= 88) rep = 'HI';
+          let a = lookupShort(m[1], rep, +m[3]);
+          const nm = scanName(N, T, m.index, false);
+          const shortName = nm && !nm.isCase && nm.tokens <= 5 ? nm.name : null;
+          if (!a && shortName) {
+            a = auths.find((x) => x.cat === 'case' && x.name && (x.aliases.has(shortName) || x.name.split(/\s+v\.\s+/)[0] === shortName)) || null;
+            if (a) a.flags.push(`Short cite "${m[0]}" (page ${pageAt(ch, m.index)}) doesn't match this case's full citation \u2014 check the volume/page`);
+          }
+          if (a) {
+            const pos = shortName ? nm.start : m.index;
+            mention(a, ch, pos, m.index + m[0].length - pos, 'short');
+            ev.push({ pos, auth: a, type: 'cite' });
+            if (shortName && /^[A-Z]/.test(shortName) && shortName.length >= 4 && !GENERIC.has(shortName)) a.aliases.add(shortName);
+          } else if (nm && (nm.isCase || nm.tokens <= 5) && /^[A-Z]/.test(nm.name)) {
+            const key = `${m[1]}|${rep}|short${m[3]}`;
+            const a2 = getAuth('case', key, { name: nm.name, cite: { vol1: m[1], rep1: rep, pg1: '', vol2: '', rep2: '', pg2: '', paren: '', shortOnly: `${m[1]} ${rep}` }, score: 0, flags: ['Only a short-form cite was found — add the full citation'] });
+            mention(a2, ch, nm.start, m.index + m[0].length - nm.start, 'short');
+            ev.push({ pos: nm.start, auth: a2, type: 'cite' });
+          }
+        } }
+
+      // HRS sections
+      const secAuth = (num) => getAuth('statute', 'hrs|' + num, { hrs: num, name: '' });
+      { const re = STAT_A(); let m;
+        while ((m = re.exec(N))) {
+          const nums = [m[1]];
+          if (m[2]) { const r2 = new RegExp(SEC, 'g'); let mm; while ((mm = r2.exec(m[2]))) nums.push(mm[0]); }
+          for (const n of nums) { const a = secAuth(n); mention(a, ch, m.index, m[0].length, 'statute'); ev.push({ pos: m.index, auth: a, type: 'cite', multi: nums.length > 1 }); }
+        } }
+      { const re = STAT_B(); let m;
+        while ((m = re.exec(N))) { const a = secAuth(m[1]); mention(a, ch, m.index, m[0].length, 'statute'); ev.push({ pos: m.index, auth: a, type: 'cite' }); } }
+      for (const R of [CHAP_A, CHAP_B]) { const re = R(); let m;
+        while ((m = re.exec(N))) { const a = getAuth('statute', 'hrsch|' + m[1], { hrsch: m[1], name: '' }); mention(a, ch, m.index, m[0].length, 'statute'); ev.push({ pos: m.index, auth: a, type: 'cite' }); } }
+      { const re = ACT_RE(); let m;
+        while ((m = re.exec(N))) {
+          const a = getAuth('statute', 'act|' + m[1] + '|' + m[2], { name: T.slice(m.index, m.index + m[0].length), act: +m[1], year: +m[2], hrs: null });
+          a.aliases.add('Act ' + m[1]);
+          mention(a, ch, m.index, m[0].length, 'statute'); ev.push({ pos: m.index, auth: a, type: 'cite' });
+        } }
+
+      // constitutions
+      const hiConst = (rom, sec) => getAuth('const', `hi|${rom}|${sec}`, { jur: 'hi', art: rom, sec, name: '' });
+      { const re = CONST_HI_A(); let m;
+        while ((m = re.exec(N))) { const a = hiConst(m[1], m[2]); mention(a, ch, m.index, m[0].length, 'const'); ev.push({ pos: m.index, auth: a, type: 'cite' }); } }
+      { const re = CONST_OF(); let m;
+        while ((m = re.exec(N))) {
+          const us = /United States|U\.S\./.test(m[3]);
+          const a = us ? getAuth('const', `us|art|${m[1]}|${m[2]}`, { jur: 'us', art: m[1], sec: m[2], name: '' }) : hiConst(m[1], m[2]);
+          mention(a, ch, m.index, m[0].length, 'const'); ev.push({ pos: m.index, auth: a, type: 'cite' });
+        } }
+      { const re = CONST_AMEND(); let m;
+        while ((m = re.exec(N))) { const r = ROMAN[m[1].toLowerCase()]; if (!r) continue;
+          const a = getAuth('const', `us|amend|${r}`, { jur: 'us', amend: r, name: '' }); mention(a, ch, m.index, m[0].length, 'const'); ev.push({ pos: m.index, auth: a, type: 'cite' }); } }
+      { const re = CONST_US(); let m;
+        while ((m = re.exec(N))) { const a = getAuth('const', `us|amend|${m[1]}`, { jur: 'us', amend: m[1], name: '' }); mention(a, ch, m.index, m[0].length, 'const'); ev.push({ pos: m.index, auth: a, type: 'cite' }); } }
+
+      // rules
+      const ruleAuth = (type, num) => getAuth('rule', `${type}|${num}`, { rtype: type, num, name: '' });
+      { const re = RULE_A(); let m;
+        while ((m = re.exec(N))) {
+          const type = m[1].toUpperCase() === 'FRCRP' ? 'FRCRP' : m[1];
+          const nums = [m[2]];
+          if (m[3]) { const r2 = /\d{1,3}(?:\.\d{1,2})?(?!\d)/g; let mm; while ((mm = r2.exec(m[3].replace(/\([A-Za-z0-9]{1,4}\)/g, '')))) nums.push(mm[0]); }
+          for (const n of nums) { const a = ruleAuth(type, n); mention(a, ch, m.index, m[0].length, 'rule'); ev.push({ pos: m.index, auth: a, type: 'cite', multi: nums.length > 1 }); }
+        } }
+      { const re = RULE_OF(); let m;
+        while ((m = re.exec(N))) { const type = RULE_LONG(m[2]); if (!type) continue; const a = ruleAuth(type, m[1]); mention(a, ch, m.index, m[0].length, 'rule'); ev.push({ pos: m.index, auth: a, type: 'cite' }); } }
+      { const re = RULE_FED(); let m;
+        while ((m = re.exec(N))) { const a = ruleAuth(shortRuleType(m[1], true), m[2]); mention(a, ch, m.index, m[0].length, 'rule'); ev.push({ pos: m.index, auth: a, type: 'cite' }); } }
+      { const re = RULE_HAW(); let m;
+        while ((m = re.exec(N))) { const a = ruleAuth(shortRuleType(m[1], false), m[2]); mention(a, ch, m.index, m[0].length, 'rule'); ev.push({ pos: m.index, auth: a, type: 'cite' }); } }
+      { const re = RULE_CIR(); let m;
+        while ((m = re.exec(N))) { const a = ruleAuth('CIR', m[1]); mention(a, ch, m.index, m[0].length, 'rule'); ev.push({ pos: m.index, auth: a, type: 'cite' }); } }
+      { const re = RULE_LR(); let m;
+        while ((m = re.exec(N))) { const a = ruleAuth('LR', m[1]); mention(a, ch, m.index, m[0].length, 'rule'); ev.push({ pos: m.index, auth: a, type: 'cite' }); } }
+
+      // other authorities
+      for (const P of OTHER_PATTERNS) {
+        const re = P.re(); let m;
+        while ((m = re.exec(N))) {
+          const a = getAuth('other', P.key(m), { name: P.name(m) });
+          mention(a, ch, m.index, m[0].length, 'other'); ev.push({ pos: m.index, auth: a, type: 'cite' });
+        }
+      }
+
+      // record cites break "Id." chains; Id. events
+      { const re = new RegExp(RECORD_RE.source, 'g'); let m; while ((m = re.exec(N))) ev.push({ pos: m.index, type: 'record' }); }
+      { const re = new RegExp(ID_RE.source, 'g'); let m;
+        while ((m = re.exec(N))) {
+          const tail = N.slice(m.index + m[0].length, m.index + m[0].length + 40);
+          if (/^\s*at\s+\d{1,4}\s+(?:Hawai'i|Hawaii|Haw\.|P\.|U\.\s?S\.|F\.)/.test(tail)) continue; // cite handles itself
+          const pm = /^\s*at\s+(\d{1,5})/.exec(tail);
+          ev.push({ pos: m.index, type: 'id', len: m[0].length + 1, pin: pm ? +pm[1] : null });
+        } }
+
+      // resolve Id. in order
+      ev.sort((a, b) => a.pos - b.pos || (a.type === 'id' ? 1 : -1));
+      // "Id." is credited to a CASE only (statutes are named on the page anyway, and "Id." after
+      // a statute in running text usually points at a record cite instead).
+      let hist = [];
+      for (const e of ev) {
+        if (e.type === 'cite') { hist.push(e); if (hist.length > 12) hist.shift(); if (e.multi) hist.push({ pos: e.pos, auth: null }); }
+        else if (e.type === 'record') hist = [];
+        else if (e.type === 'id') {
+          let target = null;
+          if (e.pin != null) {
+            for (let k = hist.length - 1; k >= 0 && !target; k--) {
+              const h = hist[k]; if (!h.auth || h.auth.cat !== 'case' || e.pos - h.pos > 2500) continue;
+              if ((h.auth.pageKeys || []).some((pk) => e.pin >= pk && e.pin - pk < 400)) target = h.auth;
+            }
+          } else {
+            const h = hist[hist.length - 1];
+            if (h && h.auth && h.auth.cat === 'case' && e.pos - h.pos < 1500) target = h.auth;
+          }
+          if (target) mention(target, ch, e.pos, e.len, 'id');
+        }
+      }
+    });
+
+    /* ---- alias mentions (short names like "Nelson I", "Act 37") ---- */
+    const aliasUse = new Map();
+    for (const a of auths) for (const al of a.aliases) aliasUse.set(al, (aliasUse.get(al) || 0) + 1);
+    for (const a of auths) {
+      for (const al of [...a.aliases]) {
+        if (al.length < 4 || GENERIC.has(al) || aliasUse.get(al) > 1) a.aliases.delete(al);
+      }
+    }
+    countAliases(auths, channels);
+
+    /* ---- display strings ---- */
+    const apos = (() => { let b = 'ʻ', n = 0; for (const k in okinaVotes) if (okinaVotes[k] > n) { n = okinaVotes[k]; b = k; } return b; })();
+    // statute style: whatever the brief body uses most often
+    const sv = { 'HRS': 0, 'H.R.S.': 0, 'Haw. Rev. Stat.': 0 };
+    for (const ch of channels) { const re = /\b(HRS|H\.R\.S\.|Haw\.\s*Rev\.\s*Stat\.|Hawai'i Revised Statutes|Hawaii Revised Statutes)(?:\s*\(\s*"?HRS"?\s*\))?\s*(?:§|[Ss]ection|[Ss]ec|[Cc]hapter|[Cc]h)/g; let m;
+      while ((m = re.exec(ch.norm))) { const t = m[1]; sv[t === 'HRS' ? 'HRS' : t === 'H.R.S.' ? 'H.R.S.' : 'Haw. Rev. Stat.']++; } }
+    let statStyle = 'HRS', bn = 0; for (const k in sv) if (sv[k] > bn) { bn = sv[k]; statStyle = k; }
+    opts = Object.assign({}, opts, { statStyle });
+    for (const a of auths) finalizeDisplay(a, opts, apos);
+    return { authorities: auths, warnings, okina: apos, channels, statStyle };
+  }
+
+  const GENERIC = new Set(['State', 'Court', 'Hawaii', "Hawai'i", 'Haw', 'Circuit', 'County', 'Board', 'Office', 'Department', 'Appellants', 'Appellees', 'Plaintiffs', 'Defendants', 'Auditor', 'Commission', 'University', 'Corporation', 'Company', 'United', 'Rule', 'Section']);
+
+  function countAliases(auths, channels) {
+    for (const a of auths) {
+      for (const al of a.aliases) {
+        const re = new RegExp(`(?<![A-Za-z'])${al.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![A-Za-z'])`, 'g');
+        for (const ch of channels) {
+          let m; while ((m = re.exec(ch.norm))) {
+            const pg = pageAt(ch, m.index);
+            if (!a.pages.has(pg)) { a.pages.add(pg); const s = Math.max(0, m.index - 40); a.mentions.push({ page: pg, kind: 'name', snippet: ch.text.slice(s, m.index + al.length + 40).trim() }); }
+          }
+        }
+      }
+    }
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* 4. Display strings, sorting, page formatting                        */
+  /* ------------------------------------------------------------------ */
+
+  function finalizeDisplay(a, opts, apos) {
+    if (a.cat === 'case') {
+      const c = a.cite;
+      const rep = (r) => (r === 'HI' ? 'Hawai' + apos + 'i' : r);
+      if (c.shortOnly) a.citeText = c.shortOnly.replace(/HI$/, 'Hawai' + apos + 'i');
+      else {
+        let s = `${c.vol1} ${rep(c.rep1)} ${c.pg1}`;
+        if (c.vol2) s += `, ${c.vol2} ${rep(c.rep2)} ${c.pg2}`;
+        if (c.paren) s += ` (${c.paren})`;
+        a.citeText = s;
+      }
+      a.displayName = a.name || '[Case name not found]';
+      if (!c.paren && !c.shortOnly) a.flags.push('No year found in the citation');
+      if (!c.vol2 && (c.rep1 === 'HI' || /^Haw\./.test(c.rep1)) && !c.shortOnly && !(c.rep1 === 'Haw.' && +c.vol1 < 30)) a.flags.push('No parallel P.2d/P.3d cite found');
+    } else if (a.cat === 'statute') {
+      const hrs = (opts.hrsStyle && opts.hrsStyle !== 'auto') ? opts.hrsStyle : (opts.statStyle || 'HRS');
+      if (a.hrs) { a.displayName = `${hrs} § ${a.hrs}`; a.sort = sortKeyHrs(a.hrs); }
+      else if (a.hrsch) { a.displayName = hrs === 'HRS' ? `HRS Chapter ${a.hrsch}` : `${hrs} ch. ${a.hrsch}`; a.sort = sortKeyHrs(a.hrsch + '-0'); a.sort[2] = -1; }
+      else { a.displayName = a.name; a.sort = [1e6, '', a.year * 1000 + a.act]; }
+    } else if (a.cat === 'const') {
+      if (a.jur === 'hi') { a.displayName = `Haw. Const. art. ${a.art}, § ${a.sec}`; a.sort = [2, romanVal(a.art), +a.sec]; }
+      else if (a.amend) { a.displayName = `U.S. Const. amend. ${a.amend}`; a.sort = [1, romanVal(a.amend), 0]; }
+      else { a.displayName = `U.S. Const. art. ${a.art}, § ${a.sec}`; a.sort = [0, romanVal(a.art), +a.sec]; }
+    } else if (a.cat === 'rule') {
+      const t = a.rtype;
+      if (t === 'CIR') a.displayName = `Ninth Circuit Rule ${a.num}`;
+      else if (t === 'LR') a.displayName = `L.R. ${a.num}`;
+      else a.displayName = `${RULE_LABEL[t]} ${a.num}`;
+      a.sort = [RULE_ORDER.indexOf(t), parseFloat(a.num) || 0, 0];
+    } else { a.displayName = a.name; a.sort = [0, a.name, 0]; }
+    a.flags = [...new Set(a.flags)];
+    a.pagesSorted = [...a.pages].sort((x, y) => x - y);
+    a.aliasList = [...a.aliases];
+  }
+  function sortKeyHrs(s) {
+    const m = /^(\d+)([A-Z]?)-(.+)$/.exec(s);
+    return m ? [+m[1], m[2], parseFloat(m[3])] : [1e5, '', 0];
+  }
+
+  function cmpAuth(a, b) {
+    if (a.cat === 'case') {
+      const n = (x) => (x.displayName || '').replace(/^[^A-Za-z0-9]+/, '').toLowerCase();
+      return n(a) < n(b) ? -1 : n(a) > n(b) ? 1 : 0;
+    }
+    const x = a.sort || [], y = b.sort || [];
+    for (let i = 0; i < 3; i++) { if (x[i] < y[i]) return -1; if (x[i] > y[i]) return 1; }
+    return (a.displayName || '') < (b.displayName || '') ? -1 : 1;
+  }
+
+  // physical pages -> label string
+  function formatPages(pagesArr, o) {
+    o = Object.assign({ startPage: 1, passim: false, passimMin: 6, ranges: false }, o || {});
+    const nums = pagesArr.map((p) => p - 1 + (+o.startPage || 1));
+    if (o.passim && nums.length >= o.passimMin) return 'passim';
+    if (!o.ranges) return nums.join(', ');
+    const out = []; let i = 0;
+    while (i < nums.length) {
+      let j = i; while (j + 1 < nums.length && nums[j + 1] === nums[j] + 1) j++;
+      out.push(j - i >= 2 ? `${nums[i]}–${nums[j]}` : nums.slice(i, j + 1).join(', '));
+      i = j + 1;
+    }
+    return out.join(', ');
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* 5. Building the .docx (as a map of part path -> XML)                */
+  /* ------------------------------------------------------------------ */
+
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const HOSTF = 'Times New Roman';
+  const rprOf = (o) => {
+    o = o || {};
+    const x = (o.host ? `<w:rFonts w:ascii="${HOSTF}" w:hAnsi="${HOSTF}" w:cs="${HOSTF}"/>` : '') + (o.b ? '<w:b/>' : '') + (o.i ? '<w:i/>' : '') +
+      (o.host ? '<w:sz w:val="24"/><w:szCs w:val="24"/>' : '') + (o.u ? '<w:u w:val="single"/>' : '');
+    return x ? `<w:rPr>${x}</w:rPr>` : '';
+  };
+  const run = (t, o) => `<w:r>${rprOf(o)}<w:t xml:space="preserve">${esc(t)}</w:t></w:r>`;
+  const tabRun = (o) => `<w:r>${rprOf(o)}<w:tab/></w:r>`;
+  const fld = (instr, cached, o) => `<w:r>${rprOf(o)}<w:fldChar w:fldCharType="begin"/></w:r><w:r>${rprOf(o)}<w:instrText xml:space="preserve"> ${instr} </w:instrText></w:r>` +
+    `<w:r>${rprOf(o)}<w:fldChar w:fldCharType="separate"/></w:r>${run(cached, o)}<w:r>${rprOf(o)}<w:fldChar w:fldCharType="end"/></w:r>`;
+  const RIGHT = 9360;
+
+  function para(inner, o) {
+    o = o || {};
+    let ppr = '';
+    if (o.keepNext) ppr += '<w:keepNext/>';
+    if (o.keepLines) ppr += '<w:keepLines/>';
+    if (o.tab) ppr += `<w:tabs><w:tab w:val="right" w:leader="dot" w:pos="${RIGHT}"/></w:tabs>`;
+    ppr += `<w:spacing w:before="${o.before || 0}" w:after="${o.after || 0}" w:line="240" w:lineRule="auto"/>`;
+    if (o.left != null) ppr += `<w:ind w:left="${o.left}" ${o.hanging ? `w:hanging="${o.hanging}"` : (o.host ? 'w:firstLine="0"' : '')} ${o.right ? `w:right="${o.right}"` : ''}/>`;
+    else if (o.host) ppr += '<w:ind w:left="0" w:firstLine="0"/>';
+    if (o.host) ppr += '<w:contextualSpacing w:val="0"/>';
+    if (o.jc || o.host) ppr += `<w:jc w:val="${o.jc || 'left'}"/>`;
+    return `<w:p><w:pPr>${ppr}</w:pPr>${inner}</w:p>`;
+  }
+
+  // page label(s) for one authority; `links` (Map page -> bookmark) makes each number a live PAGEREF field
+  function pagesXml(a, opts, links, ro) {
+    if (a.pagesOverride != null && a.pagesOverride !== '') return run(a.pagesOverride, ro);
+    if (!links) return run(formatPages(a.pagesSorted, opts), ro);
+    const pgs = a.pagesSorted;
+    const lbl = (p) => String(p - 1 + (+opts.startPage || 1));
+    if (opts.passim && pgs.length >= opts.passimMin) return run('passim', ro);
+    const one = (p) => (links.has(p) ? fld(`PAGEREF ${links.get(p)} \\h`, lbl(p), ro) : run(lbl(p), ro));
+    const parts = []; let i = 0;
+    while (i < pgs.length) {
+      let j = i;
+      if (opts.ranges) while (j + 1 < pgs.length && pgs[j + 1] === pgs[j] + 1) j++;
+      if (opts.ranges && j - i >= 2) parts.push(one(pgs[i]) + run('–', ro) + one(pgs[j]));
+      else for (let k = i; k <= j; k++) parts.push(one(pgs[k]));
+      i = j + 1;
+    }
+    return parts.join(run(', ', ro));
+  }
+
+  // the table itself, as WordprocessingML paragraphs. host=true: for pasting into someone's own document
+  function buildBlocks(auths, opts, plan, host, blockId) {
+    const ro = host ? { host: true } : {};
+    const R = (t, o) => run(t, Object.assign({}, ro, o));
+    const paras = [];
+    paras.push(para(R(opts.title, { b: true, u: true }), { jc: 'center', after: 0, host, keepNext: host }));
+    paras.push(para(R('Page(s)', { b: true }), { jc: 'right', after: 120, host, keepNext: host }));
+    const style = { u: opts.nameStyle === 'underline', i: opts.nameStyle === 'italic' };
+    for (const cat of CATS) {
+      const list = auths.filter((a) => a.cat === cat && a.include !== false).sort(cmpAuth);
+      if (!list.length) continue;
+      paras.push(para(R(CAT_HEAD[cat], { b: true, u: true }), { keepNext: true, before: 240, after: 200, host }));
+      for (const a of list) {
+        const links = plan ? plan.get(a.id) || new Map() : null;
+        const pg = pagesXml(a, opts, plan ? links : null, ro);
+        if (cat === 'case') {
+          const nm = (a.displayName || '') + ',';
+          paras.push(para(R(nm, style), { keepNext: true, keepLines: true, left: 360, hanging: 360, host }));
+          paras.push(para(R(a.citeText || '') + tabRun(ro) + pg, { tab: true, keepLines: true, left: 360, right: 0, after: 240, host }));
+        } else {
+          paras.push(para(R(a.displayName || '') + tabRun(ro) + pg, { tab: true, keepLines: true, left: 360, hanging: 360, after: 240, host }));
+        }
+      }
+    }
+    if (blockId != null && paras.length) {
+      paras[0] = paras[0].replace('</w:pPr>', `</w:pPr><w:bookmarkStart w:id="${blockId}" w:name="_toa_block"/>`);
+      paras[paras.length - 1] = paras[paras.length - 1].replace(/<\/w:p>$/, `<w:bookmarkEnd w:id="${blockId}"/></w:p>`);
+    }
+    return paras.join('');
+  }
+
+  function buildDocx(auths, opts) {
+    opts = Object.assign({ startPage: 1, passim: false, passimMin: 6, ranges: false, nameStyle: 'underline', title: 'TABLE OF AUTHORITIES', font: 'Times New Roman', size: 24 }, opts || {});
+    const body = buildBlocks(auths, opts, null, false, null);
+    const sect = '<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr>';
+    const doc = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">` +
+      `<w:body>${body}${sect}</w:body></w:document>`;
+    const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">` +
+      `<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="${opts.font}" w:hAnsi="${opts.font}" w:eastAsia="${opts.font}" w:cs="${opts.font}"/><w:sz w:val="${opts.size}"/><w:szCs w:val="${opts.size}"/><w:lang w:val="en-US"/></w:rPr></w:rPrDefault>` +
+      `<w:pPrDefault><w:pPr><w:spacing w:after="0" w:line="240" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>` +
+      `<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style></w:styles>`;
+    const ct = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">` +
+      `<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>` +
+      `<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>` +
+      `<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>`;
+    const rels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">` +
+      `<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`;
+    const drels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">` +
+      `<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`;
+    return { '[Content_Types].xml': ct, '_rels/.rels': rels, 'word/document.xml': doc, 'word/styles.xml': styles, 'word/_rels/document.xml.rels': drels };
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* 6. PDF glue (pdf.js) and manual "add authority"                      */
+  /* ------------------------------------------------------------------ */
+
+  async function extractPdf(pdfjsLib, data, onProgress) {
+    const doc = await pdfjsLib.getDocument({ data }).promise;
+    const pages = [];
+    for (let i = 1; i <= doc.numPages; i++) {
+      const p = await doc.getPage(i);
+      const tc = await p.getTextContent();
+      const H = p.view ? p.view[3] - p.view[1] : 792;
+      const items = [];
+      for (const it of tc.items) {
+        if (it.str === undefined) continue;
+        const h = it.height || Math.hypot(it.transform[2], it.transform[3]) || 0;
+        items.push({ s: it.str, h: Math.round(h * 10) / 10, x: it.transform[4], y: it.transform[5], eol: !!it.hasEOL });
+      }
+      pages.push({ h: H, items });
+      if (onProgress) onProgress(i, doc.numPages);
+    }
+    return pages;
+  }
+
+  function findText(channels, needle) {
+    const out = new Set();
+    const n = normalize(needle).trim();
+    if (!n) return [];
+    const esc2 = n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+    const re = new RegExp(`(?<![A-Za-z'])${esc2}(?![A-Za-z'])`, 'gi');
+    for (const ch of channels) { let m; while ((m = re.exec(ch.norm))) out.add(pageAt(ch, m.index)); }
+    return [...out].sort((a, b) => a - b);
+  }
+
+  function refreshDisplay(a, opts, okina) { finalizeDisplay(a, opts || {}, okina || '\u02bb'); }
+
+  /* ------------------------------------------------------------------ */
+  /* 7. Clickable page numbers: mark the citations in the writer's own   */
+  /*    .docx with hidden bookmarks and build the table from PAGEREFs    */
+  /* ------------------------------------------------------------------ */
+
+  const WNS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+  const XMLNS = 'http://www.w3.org/XML/1998/namespace';
+  const MCNS = 'http://schemas.openxmlformats.org/markup-compatibility/2006';
+  const lettersOnly = (s) => String(s).toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  function wEls(root, name) { return Array.prototype.slice.call(root.getElementsByTagNameNS(WNS, name)); }
+
+  // text of the paragraphs, with a pointer from every character back to its <w:t> node
+  function buildDocChannel(paras, name, wantRefs) {
+    let text = ''; const map = []; let prevSpace = true; const refPos = {}; const refEl = {};
+    const push = (ch, node, off, fn) => {
+      if (/[\s\u00a0\u2007\u202f\u2002-\u200a]/.test(ch)) { if (prevSpace) return; ch = ' '; prevSpace = true; }
+      else {
+        prevSpace = false;
+        // same rule as the PDF reader: "23- 9.5" reads as "23-9.5"
+        if (text.length >= 2 && text[text.length - 1] === ' ' && text[text.length - 2] === '-' && /\w/.test(ch) && (text.length < 3 || /\w/.test(text[text.length - 3]))) { text = text.slice(0, -1); map.pop(); }
+      }
+      text += ch; map.push({ n: node, o: off, fn });
+    };
+    for (const item of paras) {
+      const p = item.p, fn = item.fn;
+      (function walk(node) {
+        for (let c = node.firstChild; c; c = c.nextSibling) {
+          if (c.nodeType !== 1) continue;
+          const ln = c.localName, ns = c.namespaceURI;
+          if (ns === MCNS && ln === 'Fallback') continue;
+          if (ns !== WNS) { walk(c); continue; }
+          if (ln === 'pPr' || ln === 'rPr' || ln === 'p' || ln === 'instrText' || ln === 'delText') continue;
+          if (ln === 't') {
+            const t = c.textContent;
+            for (let i = 0; i < t.length; i++) {
+              const ch = t[i];
+              if (/[​-‍⁠﻿­]/.test(ch)) continue;
+              push(ch, c, i, fn);
+            }
+          } else if (ln === 'tab' || ln === 'br' || ln === 'cr') push(' ', null, 0, fn);
+          else if (ln === 'noBreakHyphen') push('-', null, 0, fn);
+          else if (ln === 'footnoteReference' || ln === 'endnoteReference') { if (wantRefs) { const key = ln[0] + c.getAttributeNS(WNS, 'id'); refPos[key] = text.length; refEl[key] = c; } }
+          else walk(c);
+        }
+      })(p);
+      push(' ', null, 0, fn);
+    }
+    return { name, text, starts: [0], norm: normalize(text), map, refPos, refEl };
+  }
+
+  function occurrences(channels, needle, skip) {
+    const out = [];
+    const n = normalize(needle).trim();
+    if (!n) return out;
+    const e = n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+    const re = new RegExp(`(?<![A-Za-z'])${e}(?![A-Za-z'])`, 'gi');
+    channels.forEach((ch, ci) => {
+      let m;
+      while ((m = re.exec(ch.norm))) {
+        const pos = m.index, len = m[0].length;
+        if (skip && skip.some((k) => k.ci === ci && pos >= k.pos && pos < k.pos + k.len)) continue;
+        out.push({ ci, pos, len, match: m[0], page: pageAt(ch, pos) });
+      }
+    });
+    return out;
+  }
+
+  // mentions of one reviewed authority, from a set of channels; `fromAnalysis` = its cite mentions there
+  function mentionSet(A, channels, cites) {
+    const cs = cites.filter((m) => m.pos != null).map((m) => ({ ci: m.ci || 0, pos: m.pos, len: m.len, match: m.match || '', page: m.page }));
+    const needles = [...new Set((A.aliasList || []).concat(A.find ? [A.find] : []))];
+    let all = cs.slice();
+    for (const nd of needles) all = all.concat(occurrences(channels, nd, cs));
+    return all;
+  }
+
+  function lcsPairs(P, D) {
+    const n = P.length, m = D.length;
+    const eq = (i, j) => lettersOnly(P[i].match) === lettersOnly(D[j].match);
+    const dp = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+    for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) dp[i][j] = eq(i, j) ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+    const pairs = []; let i = 0, j = 0;
+    while (i < n && j < m) {
+      if (eq(i, j) && dp[i][j] === dp[i + 1][j + 1] + 1) { pairs.push([i, j]); i++; j++; }
+      else if (dp[i + 1][j] >= dp[i][j + 1]) i++; else j++;
+    }
+    return pairs;
+  }
+
+  function splitBefore(node, doc) {
+    const run = node.parentNode;
+    let first = true;
+    for (let c = run.firstChild; c && c !== node; c = c.nextSibling) if (c.nodeType === 1 && c.localName !== 'rPr') { first = false; break; }
+    if (first) return run; // marker goes before the run
+    const nr = run.cloneNode(false);
+    const rpr = wEls(run, 'rPr').find((x) => x.parentNode === run);
+    if (rpr) nr.appendChild(rpr.cloneNode(true));
+    let c = node;
+    while (c) { const nx = c.nextSibling; nr.appendChild(c); c = nx; }
+    run.parentNode.insertBefore(nr, run.nextSibling);
+    return nr;
+  }
+
+  function markAt(tnode, off, items) {
+    const doc = tnode.ownerDocument;
+    const run = tnode.parentNode;
+    if (!run || run.localName !== 'r' || run.namespaceURI !== WNS) return false;
+    if (tnode.localName !== 't') {
+      const anchor0 = splitBefore(tnode, doc);
+      for (const it of items) {
+        const bs = doc.createElementNS(WNS, 'w:bookmarkStart'); bs.setAttributeNS(WNS, 'w:id', String(it.id)); bs.setAttributeNS(WNS, 'w:name', it.name);
+        const be = doc.createElementNS(WNS, 'w:bookmarkEnd'); be.setAttributeNS(WNS, 'w:id', String(it.id));
+        anchor0.parentNode.insertBefore(bs, anchor0); anchor0.parentNode.insertBefore(be, anchor0);
+      }
+      return true;
+    }
+    const text = tnode.textContent;
+    let anchor;
+    if (off > 0 && off < text.length) {
+      const t2 = tnode.cloneNode(false);
+      t2.textContent = text.slice(off);
+      t2.setAttributeNS(XMLNS, 'xml:space', 'preserve');
+      tnode.textContent = text.slice(0, off);
+      tnode.setAttributeNS(XMLNS, 'xml:space', 'preserve');
+      run.insertBefore(t2, tnode.nextSibling);
+      anchor = splitBefore(t2, doc);
+    } else if (off === 0) anchor = splitBefore(tnode, doc);
+    else return false;
+    for (const it of items) {
+      const bs = doc.createElementNS(WNS, 'w:bookmarkStart'); bs.setAttributeNS(WNS, 'w:id', String(it.id)); bs.setAttributeNS(WNS, 'w:name', it.name);
+      const be = doc.createElementNS(WNS, 'w:bookmarkEnd'); be.setAttributeNS(WNS, 'w:id', String(it.id));
+      anchor.parentNode.insertBefore(bs, anchor); anchor.parentNode.insertBefore(be, anchor);
+    }
+    return true;
+  }
+
+  function stripOldMarks(docs, DPc) {
+    // previous run of this tool: remove the old table block, then any of our bookmarks
+    for (const d of docs) {
+      const starts = wEls(d, 'bookmarkStart').filter((b) => b.getAttributeNS(WNS, 'name') === '_toa_block');
+      for (const bs of starts) {
+        const id = bs.getAttributeNS(WNS, 'id');
+        const be = wEls(d, 'bookmarkEnd').find((b) => b.getAttributeNS(WNS, 'id') === id);
+        const top = (el) => { while (el && el.parentNode && el.parentNode.localName !== 'body') el = el.parentNode; return el; };
+        const a = top(bs), b = be ? top(be) : null;
+        if (a && b && a.parentNode === b.parentNode) {
+          let c = a; const del = [];
+          while (c) { del.push(c); if (c === b) break; c = c.nextSibling; }
+          if (del[del.length - 1] === b) {
+            // leave a [[TOA]] marker where the old table was, so a re-run rebuilds it in the same place
+            const mk = new DPc().parseFromString(`<w:root xmlns:w="${WNS}"><w:p><w:r><w:t>[[TOA]]</w:t></w:r></w:p></w:root>`, 'application/xml');
+            a.parentNode.insertBefore(d.importNode(mk.documentElement.firstChild, true), a);
+            del.forEach((x) => x.parentNode.removeChild(x));
+          }
+        }
+      }
+    }
+    for (const d of docs) {
+      const bss = wEls(d, 'bookmarkStart').filter((b) => /^_toa_/.test(b.getAttributeNS(WNS, 'name')));
+      const ids = new Set(bss.map((b) => b.getAttributeNS(WNS, 'id')));
+      bss.forEach((b) => b.parentNode.removeChild(b));
+      wEls(d, 'bookmarkEnd').filter((b) => ids.has(b.getAttributeNS(WNS, 'id'))).forEach((b) => b.parentNode.removeChild(b));
+    }
+  }
+
+  /* data: .docx bytes; auths: the reviewed list; pdfChannels: from the PDF analysis.
+     env: { JSZip, DOMParser, XMLSerializer } (browser globals by default) */
+  async function linkDocx(data, auths, opts, pdfChannels, env) {
+    env = env || {};
+    const JSZipLib = env.JSZip || (typeof JSZip !== 'undefined' ? JSZip : null);
+    const DP = env.DOMParser || (typeof DOMParser !== 'undefined' ? DOMParser : null);
+    const XS = env.XMLSerializer || (typeof XMLSerializer !== 'undefined' ? XMLSerializer : null);
+    if (!JSZipLib || !DP || !XS) throw new Error('This browser cannot open Word files here.');
+    opts = Object.assign({ startPage: 1, passim: false, passimMin: 6, ranges: false, nameStyle: 'underline', title: 'TABLE OF AUTHORITIES', hrsStyle: 'auto' }, opts || {});
+    const report = { warnings: [], pagesTotal: 0, pagesLinked: 0, partial: [], markerFound: false };
+    let zip;
+    try { zip = await JSZipLib.loadAsync(data); } catch (e) { throw new Error('That file is not a Word .docx file.'); }
+    if (!zip.file('word/document.xml')) throw new Error('That file is not a Word .docx file. (Old .doc files: open in Word and Save As .docx first.)');
+    const docs = {};
+    for (const n of ['word/document.xml', 'word/footnotes.xml', 'word/endnotes.xml']) {
+      const f = zip.file(n); if (!f) continue;
+      const d = new DP().parseFromString(await f.async('string'), 'application/xml');
+      if (d.getElementsByTagName('parsererror').length) throw new Error('Could not read ' + n + ' inside the Word file.');
+      docs[n] = d;
+    }
+    const docList = Object.keys(docs).map((k) => docs[k]);
+    stripOldMarks(docList, DP);
+
+    // channels of the Word file
+    const dDoc = docs['word/document.xml'];
+    const bodyParas = wEls(dDoc, 'p').map((p) => ({ p, fn: null }));
+    const body = buildDocChannel(bodyParas, 'body', true);
+    const noteParas = [];
+    for (const [n, tag, pre] of [['word/footnotes.xml', 'footnote', 'f'], ['word/endnotes.xml', 'endnote', 'e']]) {
+      if (!docs[n]) continue;
+      for (const fnEl of wEls(docs[n], tag)) {
+        const ty = fnEl.getAttributeNS(WNS, 'type');
+        if (ty && ty !== 'normal') continue;
+        const id = pre + fnEl.getAttributeNS(WNS, 'id');
+        wEls(fnEl, 'p').forEach((p) => noteParas.push({ p, fn: id }));
+      }
+    }
+    const notes = noteParas.length ? buildDocChannel(noteParas, 'notes', false) : null;
+    const channels = notes && notes.text.trim() ? [body, notes] : [body];
+
+    // where the brief's body begins and ends inside the Word file (skips the TOC, caption, etc.)
+    let ws = 0, we = Infinity;
+    const pdfL = lettersOnly(pdfChannels && pdfChannels[0] ? pdfChannels[0].text : '');
+    const idxMap = []; let dl = '';
+    for (let i = 0; i < body.text.length; i++) { const c = body.text[i].toLowerCase(); if (/[a-z0-9]/.test(c)) { dl += c; idxMap.push(i); } }
+    let gotStart = false, gotEnd = false;
+    for (const L of [300, 150, 80, 40]) {
+      if (pdfL.length < L) continue;
+      if (!gotStart) { const k = dl.indexOf(pdfL.slice(0, L)); if (k >= 0) { ws = idxMap[k]; gotStart = true; } }
+      if (!gotEnd) { const k = dl.lastIndexOf(pdfL.slice(-L)); if (k >= 0) { we = idxMap[k + L - 1] + 1; gotEnd = true; } }
+      if (gotStart && gotEnd) break;
+    }
+    if (!gotStart) report.warnings.push('Could not tell where the brief begins in the Word file, so the whole file was searched. Make sure the PDF was saved from this same Word file.');
+    if (gotStart && gotEnd && we <= ws) { ws = 0; we = Infinity; }
+
+    const r = analyze(null, { channels, hrsStyle: opts.hrsStyle });
+    const dk = new Map(r.authorities.map((x) => [x.cat + '|' + x.key, x]));
+    const inWin = (m) => {
+      if (m.ci === 0) return m.pos >= ws && m.pos < we;
+      const fn = channels[1] && channels[1].map[m.pos] ? channels[1].map[m.pos].fn : null;
+      const rp = fn != null ? body.refPos[fn] : null;
+      return rp != null && rp >= ws && rp < we;
+    };
+    const dKey = (m) => (m.ci === 0 ? m.pos : ((channels[1].map[m.pos] && body.refPos[channels[1].map[m.pos].fn]) || 0) + m.pos / 1e7);
+
+    // ids for new bookmarks must not collide with any existing annotation id
+    let maxId = 1000;
+    for (const d of docList) for (const el of wEls(d, '*')) { const v = parseInt(el.getAttributeNS(WNS, 'id'), 10); if (v > maxId) maxId = v; }
+    let nextId = maxId + 1;
+
+    // plan bookmarks
+    const marks = []; // {ci,pos,name,id}
+    const plan = new Map();
+    let ai = 0;
+    for (const A of auths) {
+      if (A.include === false) continue;
+      ai++;
+      if (!A.pagesSorted || !A.pagesSorted.length) continue;
+      if (A.pagesOverride != null && A.pagesOverride !== '') { report.partial.push({ name: A.displayName, why: 'pages typed by hand' }); report.pagesTotal += A.pagesSorted.length; continue; }
+      report.pagesTotal += A.pagesSorted.length;
+      if (opts.passim && A.pagesSorted.length >= opts.passimMin) { report.pagesTotal -= A.pagesSorted.length; continue; } // shown as "passim", nothing to link
+      if (!pdfChannels) continue;
+      const P = mentionSet(A, pdfChannels, (A.mentions || []).filter((m) => m.kind !== 'name'));
+      const keys = [A.key].concat(A.mergedKeys || []).filter((k) => k != null);
+      let dCites = [];
+      for (const k of keys) { const x = dk.get(A.cat + '|' + k); if (x) dCites = dCites.concat(x.mentions || []); }
+      const D = mentionSet(A, channels, dCites).filter(inWin);
+      P.sort((x, y) => (x.page - y.page) || (x.ci - y.ci) || (x.pos - y.pos));
+      D.sort((x, y) => dKey(x) - dKey(y));
+      const pairs = lcsPairs(P, D);
+      const links = new Map(); const seen = new Set();
+      for (const [i, j] of pairs) {
+        const pg = P[i].page;
+        if (seen.has(pg)) continue;
+        seen.add(pg);
+        const name = `_toa_${ai}_p${pg}`;
+        marks.push({ ci: D[j].ci, pos: D[j].pos, name, id: nextId++ });
+        links.set(pg, name);
+      }
+      plan.set(A.id, links);
+      const miss = A.pagesSorted.filter((p) => !links.has(p));
+      report.pagesLinked += A.pagesSorted.length - miss.length;
+      if (miss.length) report.partial.push({ name: A.displayName, pages: miss.map((p) => p - 1 + (+opts.startPage || 1)), why: 'not found in the Word file' });
+    }
+
+    // insert the bookmarks (per text node, from the end backwards so offsets stay valid)
+    const byNode = new Map();
+    for (const m of marks) {
+      const ch = channels[m.ci]; let k = m.pos;
+      while (k < ch.map.length && !ch.map[k].n) k++;
+      const e = ch.map[k];
+      if (!e) { m.failed = true; continue; }
+      // a citation inside a footnote is marked at the footnote's reference number in the body (works the same in Word and elsewhere)
+      const anchorEl = m.ci === 1 ? body.refEl[e.fn] : null;
+      const key = anchorEl || e.n;
+      if (m.ci === 1 && !anchorEl) { m.failed = true; continue; }
+      if (!byNode.has(key)) byNode.set(key, new Map());
+      const g = byNode.get(key);
+      const off = anchorEl ? 0 : e.o;
+      if (!g.has(off)) g.set(off, []);
+      g.get(off).push(m);
+    }
+    const failed = new Set();
+    for (const [node, g] of byNode) {
+      const offs = [...g.keys()].sort((a, b) => b - a);
+      for (const off of offs) if (!markAt(node, off, g.get(off))) g.get(off).forEach((m) => { m.failed = true; });
+    }
+    for (const m of marks) if (m.failed) failed.add(m.name);
+    if (failed.size) {
+      for (const links of plan.values()) for (const [pg, nm] of [...links]) if (failed.has(nm)) { links.delete(pg); report.pagesLinked--; }
+    }
+
+    // the table
+    const blockId = nextId++;
+    const xml = buildBlocks(auths, opts, plan, true, blockId);
+    const frag = new DP().parseFromString(`<w:root xmlns:w="${WNS}">${xml}</w:root>`, 'application/xml');
+    if (frag.getElementsByTagName('parsererror').length) throw new Error('Internal error while building the table.');
+    const nodes = Array.prototype.slice.call(frag.documentElement.childNodes).map((n) => dDoc.importNode(n, true));
+    const bodyEl = wEls(dDoc, 'body')[0];
+    // marker paragraph "[[TOA]]" on its own line
+    let marker = null;
+    for (const p of wEls(dDoc, 'p')) {
+      const t = wEls(p, 't').map((x) => x.textContent).join('').replace(/\s+/g, '');
+      if (/^\[\[TOA\]\]$/i.test(t)) { marker = p; break; }
+    }
+    if (marker) {
+      report.markerFound = true;
+      nodes.forEach((n) => marker.parentNode.insertBefore(n, marker));
+      marker.parentNode.removeChild(marker);
+    } else {
+      const spacer = new DP().parseFromString(`<w:root xmlns:w="${WNS}"><w:p><w:pPr><w:pageBreakBefore/><w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"/></w:pPr></w:p></w:root>`, 'application/xml');
+      const sp = dDoc.importNode(spacer.documentElement.firstChild, true);
+      const first = bodyEl.firstChild;
+      nodes.forEach((n) => bodyEl.insertBefore(n, first));
+      bodyEl.insertBefore(sp, first);
+    }
+
+    for (const n of Object.keys(docs)) {
+      let x = new XS().serializeToString(docs[n]).replace(/^<\?xml[^>]*\?>\s*/, '');
+      zip.file(n, '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + x);
+    }
+    const out = await zip.generateAsync({ type: 'uint8array', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', compression: 'DEFLATE' });
+    report.bookmarks = marks.length - failed.size;
+    return { data: out, report };
+  }
+
+  return { prepareChannels, analyze, buildDocx, buildBlocks, linkDocx, formatPages, cmpAuth, extractPdf, findText, refreshDisplay, CATS, CAT_HEAD, normalize };
+}));
+
+</script>
+<script>
+(function () {
+  'use strict';
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const CAT_LABEL = { case: 'Cases', statute: 'Statutes', const: 'Constitutional provisions', rule: 'Rules', other: 'Other authorities' };
+
+  const S = { auths: [], channels: null, docx: null, okina: 'ʻ', example: true, fileName: '', onlyCheck: false,
+    opts: { startPage: 1, passim: true, passimMin: 5, ranges: false, nameStyle: 'underline', hrsStyle: 'auto', statStyle: 'HRS' } };
+
+  /* ---------- example rows (layout only; clearly labelled) ---------- */
+  function ex(cat, displayName, citeText, pages, extra) {
+    return Object.assign({ id: 'ex' + Math.random(), cat, displayName, citeText: citeText || '', pagesSorted: pages, pages: new Set(pages), mentions: [], aliases: new Set(), aliasList: [], flags: [], include: true }, extra || {});
+  }
+  function exampleSet() {
+    return [
+      ex('case', 'Ching v. Case', '145 Hawai‘i 148, 449 P.3d 1146 (2019)', [19]),
+      ex('case', 'Dairy Rd. Partners v. Island Ins. Co., Ltd.', '92 Hawai‘i 398, 992 P.2d 93 (2000)', [16]),
+      ex('case', 'Ex parte Young', '209 U.S. 123 (1908)', [26]),
+      ex('case', 'Kaleikini v. Yoshioka', '129 Hawai‘i 454, 304 P.3d 252 (2013)', [25, 26]),
+      ex('case', 'Tax Foundation of Hawai‘i v. State', '144 Hawai‘i 175, 439 P.3d 127 (2019)', [7, 17, 19, 20], { flags: ['Example of a flag: the reader found a short cite that does not match the full cite'] }),
+      ex('statute', 'HRS § 23-5', '', [4, 5, 7, 8, 9, 11, 13, 18], { sort: [23, '', 5] }),
+      ex('statute', 'HRS § 632-1', '', [3, 4, 5, 7, 9, 18, 19, 28], { sort: [632, '', 1] }),
+      ex('const', 'Haw. Const. art. VII, § 10', '', [10, 25, 30, 32], { sort: [2, 7, 10] }),
+      ex('rule', 'HRCP Rule 12', '', [17], { sort: [1, 12, 0] }),
+      ex('rule', 'HRE Rule 503', '', [7, 9, 10, 30, 31, 33], { sort: [2, 503, 0] })
+    ];
+  }
+
+  /* ---------- helpers ---------- */
+  function autoPages(a) { return TOA.formatPages(a.pagesSorted, S.opts); }
+  function pagesText(a) { return a.pagesOverride != null && a.pagesOverride !== '' ? a.pagesOverride : autoPages(a); }
+  function flagsOf(a) {
+    const f = (a.flags || []).slice();
+    if (!a.pagesSorted.length && !(a.pagesOverride)) f.push('No pages found — type the pages or add text to search for');
+    if (a.cat === 'case' && !a.displayName) f.push('Case name is empty');
+    return f;
+  }
+  function setPages(a) { a.pagesSorted = [...a.pages].sort((x, y) => x - y); }
+  function recomputePages(a) {
+    // pages from citations + any names the reader is asked to count
+    const base = new Set((a.mentions || []).filter((m) => m.kind !== 'name').map((m) => m.page));
+    const extra = [];
+    if (S.channels) for (const al of (a.aliasList || [])) for (const p of TOA.findText(S.channels, al)) { base.add(p); extra.push({ page: p, kind: 'name', snippet: al }); }
+    a.mentions = (a.mentions || []).filter((m) => m.kind !== 'name').concat(extra);
+    a.pages = base; setPages(a);
+  }
+  function status(msg, err) { const el = $('#status'); el.textContent = msg || ''; el.className = err ? 'err' : ''; }
+
+  /* ---------- render ---------- */
+  function renderAll() { renderCounts(); renderReview(); renderPreview(); syncControls(); }
+
+  function renderCounts() {
+    const on = S.auths.filter((a) => a.include !== false);
+    const check = S.auths.filter((a) => flagsOf(a).length && a.include !== false).length;
+    const by = {}; on.forEach((a) => { by[a.cat] = (by[a.cat] || 0) + 1; });
+    let h = S.example ? '<span class="chip ex">Example rows — choose your PDF to begin</span>' : '';
+    for (const c of TOA.CATS) if (by[c]) h += `<span class="chip">${by[c]} ${esc(CAT_LABEL[c].toLowerCase())}</span>`;
+    if (check) h += `<span class="chip warn">${check} to check</span>`;
+    $('#counts').innerHTML = h;
+  }
+
+  function rowHtml(a) {
+    const fl = flagsOf(a);
+    const pg = pagesText(a);
+    const isCase = a.cat === 'case';
+    const ments = (a.mentions || []).slice().sort((x, y) => x.page - y.page);
+    const label = { full: 'cite', short: 'short cite', nameless: 'cite', id: 'Id.', statute: '', const: '', rule: '', other: '', name: 'name' };
+    const more = S.example ? '' : `<details class="more"><summary>Where found (${ments.length})</summary>
+        <ul class="mlist">${ments.map((m) => `<li><b>p. ${m.page - 1 + (+S.opts.startPage || 1)}</b><span>${label[m.kind] ? `<i>${esc(label[m.kind])}</i> · ` : ''}…${esc(m.snippet)}…</span></li>`).join('') || '<li><span>Nothing found in the text.</span></li>'}</ul>
+        <div class="tools">
+          <input type="text" data-f="alias" value="${esc((a.aliasList || []).join(', '))}" placeholder="Also count mentions of… (comma-separated, e.g. Nelson I)" aria-label="Also count mentions of">
+          <select data-f="merge" aria-label="Merge into another entry"><option value="">Merge into…</option>${S.auths.filter((b) => b !== a && b.cat === a.cat).sort(TOA.cmpAuth).map((b) => `<option value="${b.id}">${esc(b.displayName)}</option>`).join('')}</select>
+        </div></details>`;
+    return `<div class="row${a.include === false ? ' off' : ''}${fl.length && a.include !== false ? ' check' : ''}" data-id="${esc(a.id)}">
+      <input type="checkbox" data-f="inc" ${a.include === false ? '' : 'checked'} aria-label="Include in table">
+      <div>
+        <input class="field nm" data-f="nm" value="${esc(a.displayName)}" aria-label="Name">
+        ${isCase ? `<input class="field ct" data-f="ct" value="${esc(a.citeText)}" aria-label="Citation">` : ''}
+        ${fl.length ? `<div class="flags">${fl.map((f) => `<span class="flag">${esc(f)}</span>`).join('')}</div>` : ''}
+      </div>
+      <div class="pgbox"><label>Pages</label><input class="field pg" data-f="pg" value="${esc(pg)}" aria-label="Pages"></div>
+      ${more}
+    </div>`;
+  }
+
+  function renderReview() {
+    let h = '';
+    for (const c of TOA.CATS) {
+      let list = S.auths.filter((a) => a.cat === c).sort(TOA.cmpAuth);
+      if (S.onlyCheck) list = list.filter((a) => flagsOf(a).length);
+      if (!list.length) continue;
+      h += `<section class="cat"><h2>${esc(CAT_LABEL[c])} <small>${list.length}</small></h2><div class="rows">${list.map(rowHtml).join('')}</div></section>`;
+    }
+    if (!h) h = '<p class="how">Nothing to show here.</p>';
+    const keep = document.activeElement && document.activeElement.closest && document.activeElement.closest('#review');
+    $('#review').innerHTML = h;
+  }
+
+  function renderPreview() {
+    const o = S.opts;
+    let h = '<div class="p-title">TABLE OF AUTHORITIES</div><div class="p-pg">Page(s)</div>';
+    for (const c of TOA.CATS) {
+      const list = S.auths.filter((a) => a.cat === c && a.include !== false).sort(TOA.cmpAuth);
+      if (!list.length) continue;
+      h += `<div class="p-head">${esc(TOA.CAT_HEAD[c])}</div>`;
+      for (const a of list) {
+        const pg = esc(pagesText(a));
+        if (c === 'case') h += `<div class="p-ent"><div class="p-name ${esc(o.nameStyle)}">${esc(a.displayName)},</div><div class="p-line"><span>${esc(a.citeText)}</span><i class="lead"></i><span class="pgs">${pg}</span></div></div>`;
+        else h += `<div class="p-ent one"><div class="p-line"><span>${esc(a.displayName)}</span><i class="lead"></i><span class="pgs">${pg}</span></div></div>`;
+      }
+    }
+    $('#paper').innerHTML = h;
+    $('#ribbon').hidden = !S.example;
+    $('#dl').disabled = S.example || !S.auths.some((a) => a.include !== false);
+    $('#dlLinked').disabled = S.example || !S.docx || !S.auths.some((a) => a.include !== false);
+  }
+
+  function syncControls() {
+    const o = S.opts;
+    $('#startPage').value = o.startPage; $('#nameStyle').value = o.nameStyle; $('#hrsStyle').value = o.hrsStyle;
+    $('#passim').checked = o.passim; $('#passimMin').value = String(o.passimMin); $('#ranges').checked = o.ranges;
+    $('#passimMin').disabled = !o.passim;
+    $('#addbox').style.display = S.example ? 'none' : '';
+  }
+
+  /* ---------- events ---------- */
+  const review = $('#review');
+  function rowAuth(el) { const r = el.closest('.row'); return r ? S.auths.find((a) => String(a.id) === r.dataset.id) : null; }
+  review.addEventListener('input', (e) => {
+    const f = e.target.dataset.f; const a = rowAuth(e.target); if (!a) return;
+    if (f === 'nm') { a.displayName = e.target.value; a.edited = true; }
+    else if (f === 'ct') { a.citeText = e.target.value; }
+    else if (f === 'pg') { a.pagesOverride = e.target.value.trim() === autoPages(a) ? null : e.target.value; }
+    else return;
+    renderPreview();
+  });
+  review.addEventListener('change', (e) => {
+    const f = e.target.dataset.f; const a = rowAuth(e.target); if (!a) return;
+    if (f === 'inc') { a.include = e.target.checked; renderAll(); }
+    else if (f === 'alias') {
+      a.aliasList = e.target.value.split(',').map((x) => x.trim()).filter(Boolean); a.aliases = new Set(a.aliasList);
+      recomputePages(a); renderAll();
+    } else if (f === 'merge' && e.target.value) {
+      const t = S.auths.find((b) => String(b.id) === e.target.value); if (!t) return;
+      t.mentions = (t.mentions || []).concat(a.mentions || []); a.pages.forEach((p) => t.pages.add(p)); setPages(t);
+      t.mergedKeys = (t.mergedKeys || []).concat([a.key], a.mergedKeys || []).filter((k) => k != null);
+      if (a.find && !t.find) t.find = a.find;
+      (a.aliasList || []).forEach((x) => { if (!t.aliasList.includes(x)) t.aliasList.push(x); });
+      S.auths = S.auths.filter((b) => b !== a); renderAll();
+    } else if (f === 'pg') { renderAll(); }
+  });
+  $('#onlyCheck').addEventListener('change', (e) => { S.onlyCheck = e.target.checked; renderReview(); });
+
+  function readSettings() {
+    const o = S.opts;
+    o.startPage = Math.max(1, parseInt($('#startPage').value, 10) || 1);
+    o.nameStyle = $('#nameStyle').value; o.passim = $('#passim').checked; o.passimMin = +$('#passimMin').value; o.ranges = $('#ranges').checked;
+    const h = $('#hrsStyle').value;
+    if (h !== o.hrsStyle) { o.hrsStyle = h; S.auths.forEach((a) => { if (a.cat === 'statute' && !a.edited && a.displayName && (a.hrs || a.hrsch)) { const nm = a.displayName; TOA.refreshDisplay(a, o, S.okina); } }); }
+    try { localStorage.setItem('atb.opts2', JSON.stringify(o)); } catch (e) { /* optional */ }
+  }
+  ['startPage', 'nameStyle', 'hrsStyle', 'passim', 'passimMin', 'ranges'].forEach((id) => $('#' + id).addEventListener('change', () => { readSettings(); renderAll(); }));
+  $('#startPage').addEventListener('input', () => { readSettings(); renderCounts(); renderPreview(); });
+
+  /* add authority */
+  $('#addBtn').addEventListener('click', () => {
+    const cat = $('#addCat').value, name = $('#addName').value.trim(), cite = $('#addCite').value.trim(), find = $('#addFind').value.trim();
+    if (!name) { $('#addMsg').textContent = 'Type a name first.'; return; }
+    const pages = find && S.channels ? TOA.findText(S.channels, find) : [];
+    const a = { id: 'm' + Date.now(), cat, displayName: name, citeText: cat === 'case' ? cite : '', pages: new Set(pages), pagesSorted: pages, mentions: pages.map((p) => ({ page: p, kind: 'name', snippet: find })), find: find || '', aliases: new Set(find ? [find] : []), aliasList: find ? [find] : [], flags: [], include: true, edited: true, sort: [1e6, name, 0] };
+    S.auths.push(a); $('#addName').value = ''; $('#addCite').value = ''; $('#addFind').value = '';
+    $('#addMsg').textContent = pages.length ? `Added. Found on ${pages.length} page${pages.length > 1 ? 's' : ''}.` : 'Added with no pages — type them in the Pages box.';
+    renderAll();
+  });
+
+  /* file loading */
+  const drop = $('#drop'), fileIn = $('#file');
+  $('#pick').addEventListener('click', () => fileIn.click());
+  fileIn.addEventListener('change', () => { if (fileIn.files[0]) loadFile(fileIn.files[0]); });
+  ['dragenter', 'dragover'].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', (e) => { const f = e.dataTransfer && e.dataTransfer.files[0]; if (f) loadFile(f); });
+
+  async function loadFile(file) {
+    if (!/\.pdf$/i.test(file.name) && file.type !== 'application/pdf') { status('That is not a PDF. In Word, use File > Save As > PDF, then choose the PDF.', true); return; }
+    if (!window.pdfjsLib) { status('The PDF reader did not load. Check your connection and reload the page.', true); return; }
+    try {
+      status('Reading ' + file.name + '…');
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = './vendor/pdf.worker.min.js';
+      const buf = new Uint8Array(await file.arrayBuffer());
+      const pages = await TOA.extractPdf(window.pdfjsLib, buf, (i, n) => status(`Reading page ${i} of ${n}…`));
+      const chars = pages.reduce((n, p) => n + p.items.reduce((m, it) => m + it.s.length, 0), 0);
+      if (chars < 300) { status('This PDF has no selectable text (it may be a scan). Save the brief from Word as a PDF instead of scanning it.', true); return; }
+      const r = TOA.analyze(pages, S.opts);
+      S.auths = r.authorities; S.channels = r.channels; S.okina = r.okina; S.opts.statStyle = r.statStyle; S.opts.hrsStyle = 'auto'; S.example = false; S.fileName = file.name;
+      S.auths.forEach((a) => { a.aliasList = a.aliasList || []; });
+      const check = S.auths.filter((a) => flagsOf(a).length).length;
+      status(`Read ${pages.length} pages of ${file.name}. Found ${S.auths.length} authorities${check ? `; ${check} need a look (highlighted below)` : ''}.`);
+      renderAll();
+    } catch (err) {
+      status('Could not read that PDF: ' + (err && err.message ? err.message : 'unknown error') + '. If it is password-protected, save an unprotected copy.', true);
+    }
+  }
+
+  /* download */
+  $('#dl').addEventListener('click', async () => {
+    const msg = $('#dlMsg'); msg.textContent = '';
+    try {
+      const parts = TOA.buildDocx(S.auths, Object.assign({}, S.opts));
+      const zip = new window.JSZip();
+      Object.keys(parts).forEach((k) => zip.file(k, parts[k]));
+      const blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', compression: 'DEFLATE' });
+      const base = S.fileName ? S.fileName.replace(/\.pdf$/i, '') + ' - ' : '';
+      saveBlob(blob, base + 'Table of Authorities.docx');
+      msg.textContent = 'Saved. Open it in Word and paste it into your brief.';
+    } catch (e) {
+      msg.textContent = e && e.code === 'declined' ? 'Save cancelled.' : 'Could not save the file' + (e && e.message ? ': ' + e.message : '.');
+    }
+  });
+
+  /* clickable page numbers: attach the Word file, then build a copy of it with the table inside */
+  const docxIn = $('#docxFile');
+  $('#pickDocx').addEventListener('click', () => docxIn.click());
+  docxIn.addEventListener('change', async () => {
+    const f = docxIn.files[0]; if (!f) return;
+    const msg = $('#linkMsg'); msg.className = ''; msg.textContent = '';
+    if (!/\.docx$/i.test(f.name)) { S.docx = null; $('#docxName').textContent = 'No Word file chosen'; msg.className = 'err'; msg.textContent = 'That is not a .docx file. In Word, use File > Save As > Word Document (.docx).'; renderPreview(); return; }
+    S.docx = { name: f.name, data: new Uint8Array(await f.arrayBuffer()) };
+    $('#docxName').textContent = f.name;
+    if (S.example) { msg.textContent = 'Choose your PDF first, then check the list.'; }
+    renderPreview();
+  });
+  $('#dlLinked').addEventListener('click', async () => {
+    const msg = $('#linkMsg'); msg.className = ''; msg.textContent = 'Working…';
+    try {
+      const out = await TOA.linkDocx(S.docx.data, S.auths, Object.assign({}, S.opts), S.channels, { JSZip: window.JSZip });
+      const rep = out.report;
+      const blob = new Blob([out.data], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+      saveBlob(blob, S.docx.name.replace(/\.docx$/i, '') + ' - with clickable Table of Authorities.docx');
+      let h = 'Saved. ';
+      h += `Linked ${rep.pagesLinked} of ${rep.pagesTotal} page numbers.` + (rep.markerFound ? '' : ' The table is at the very top of the file; cut and paste it where it belongs.');
+      h += ' Open the file in Word, press Ctrl+A, then F9, then check the numbers before you save the PDF.';
+      const extra = [];
+      rep.warnings.forEach((w) => extra.push(esc(w)));
+      rep.partial.forEach((p) => extra.push(`${esc(p.name)}: ${p.pages ? 'page' + (p.pages.length > 1 ? 's' : '') + ' ' + esc(p.pages.join(', ')) + ' left as plain numbers (not found in the Word file)' : esc(p.why) + ', left as plain numbers'}`));
+      msg.className = rep.pagesLinked === rep.pagesTotal && !rep.warnings.length ? 'ok' : '';
+      msg.innerHTML = esc(h) + (extra.length ? '<ul>' + extra.slice(0, 12).map((x) => '<li>' + x + '</li>').join('') + (extra.length > 12 ? '<li>…and ' + (extra.length - 12) + ' more</li>' : '') + '</ul>' : '');
+    } catch (e) {
+      msg.className = 'err';
+      msg.textContent = e && e.code === 'declined' ? 'Save cancelled.' : 'Could not build the file' + (e && e.message ? ': ' + e.message : '.');
+    }
+  });
+
+  /* boot */
+  try { const saved = JSON.parse(localStorage.getItem('atb.opts2') || 'null'); if (saved) Object.assign(S.opts, saved); } catch (e) { /* ignore */ }
+  S.auths = exampleSet();
+  renderAll();
+  if (!window.pdfjsLib) status('The PDF reader is still loading…');
+})();
+</script>
+
+
+<script src="./license-check.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch((e) => console.warn('Service worker registration failed:', e));
+    });
+  }
+</script>
+</body>
+</html>

@@ -17,7 +17,7 @@
   'use strict';
 
   // ---- CONFIGURE THESE TWO VALUES ----
-  const CONFIG_URL = 'https://github.io';
+  const CONFIG_URL = 'https://yourdomain.com/access-control.json';
   const GRACE_PERIOD_MS = 5 * 24 * 60 * 60 * 1000; // 5 days
   // -------------------------------------
 

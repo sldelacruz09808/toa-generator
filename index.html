@@ -828,6 +828,7 @@ details.more summary{cursor:pointer;width:max-content;color:var(--accent);font-w
     if (o.keepNext) ppr += '<w:keepNext/>';
     if (o.keepLines) ppr += '<w:keepLines/>';
     if (o.tab) ppr += `<w:tabs><w:tab w:val="right" w:leader="dot" w:pos="${RIGHT}"/></w:tabs>`;
+    else if (o.tabPlain) ppr += `<w:tabs><w:tab w:val="right" w:pos="${RIGHT}"/></w:tabs>`;
     ppr += `<w:spacing w:before="${o.before || 0}" w:after="${o.after || 0}" w:line="240" w:lineRule="auto"/>`;
     if (o.left != null) ppr += `<w:ind w:left="${o.left}" ${o.hanging ? `w:hanging="${o.hanging}"` : (o.host ? 'w:firstLine="0"' : '')} ${o.right ? `w:right="${o.right}"` : ''}/>`;
     else if (o.host) ppr += '<w:ind w:left="0" w:firstLine="0"/>';
@@ -861,7 +862,10 @@ details.more summary{cursor:pointer;width:max-content;color:var(--accent);font-w
     const R = (t, o) => run(t, Object.assign({}, ro, o));
     const paras = [];
     paras.push(para(R(opts.title, { b: true, u: true }), { jc: 'center', after: 0, host, keepNext: host }));
-    paras.push(para(R('Page(s)', { b: true }), { jc: 'right', after: 120, host, keepNext: host }));
+    // Right-aligned via an explicit tab stop at the same fixed position the page numbers use below
+    // (not paragraph justification), so it lines up with them even when this table is pasted into
+    // a document whose own margins differ slightly from the standard 1" this app assumes.
+    paras.push(para(tabRun(ro) + R('Page(s)', { b: true }), { tabPlain: true, after: 120, host, keepNext: host }));
     const style = { u: opts.nameStyle === 'underline', i: opts.nameStyle === 'italic' };
     for (const cat of CATS) {
       const list = auths.filter((a) => a.cat === cat && a.include !== false).sort(cmpAuth);
